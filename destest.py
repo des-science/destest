@@ -1,0 +1,775 @@
+import tables as tb
+import numpy as np
+import fitsio as fio
+import h5py
+import cPickle as pickle
+import os
+# and maybe a bit optimistic...
+from multiprocessing import Pool
+from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
+
+if sys.version_info[0] == 3:
+    string_types = str,
+else:
+    string_types = basestring,
+
+
+def save_obj( obj, name ):
+    with open(name, 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+
+def load_obj( name ):
+    with open(name, 'rb') as f:
+        return pickle.load(f)
+
+
+def convert_mcal_to_h5( catdir='/global/project/projectdirs/des/wl/desdata/users/esheldon/matched-catalogs/', file_ext='fits', outfile='./out.h5' ):
+    """
+    Converts list of metacal fits files into a single h5 file with separate tables for each of the unsheared and four sheared values.
+    """
+    import glob
+
+    def append_sheared_table( f, cat, i, sheared, iter_end ):
+
+        cols = [name for name in cat.dtype.names if (name[-3:] == '_'+sheared)]
+        tmp  = cat[cols]
+        tmp.dtype.names = [name[:-3] for name in tmp.dtype.names]
+        if i==0:
+            f.create_dataset('catalog/sheared_'+sheared, maxshape=(None), shape=(total_length,), dtype=tmp.dtype)
+        f['catalog/sheared_'+sheared][iter_end:iter_end+len(cat)] = tmp
+
+    total_length = 0
+    for i,name in enumerate(glob.glob(catdir+'*')):
+        if name[-len(file_ext):] != file_ext:
+            continue
+        total_length += fio.FITS(catdir+name)[1].read_header()['NAXIS2']
+
+    f = h5py.File(outfile, 'w')
+
+    iter_end = 0
+    for i,name in enumerate(glob.glob(catdir+'*')):
+        if name[-len(file_ext):] != file_ext:
+            continue
+        print name
+
+        cat=fio.FITS(catdir+name+'.fits')[1].read()
+
+        cols = [name for name in cat.dtype.names if ((not name[-3:] == '_1p') and (not name[-3:] == '_1m') and (not name[-3:] == '_2p') and (not name[-3:] == '_2m'))]
+        if i==0:
+            f.create_dataset('catalog/unsheared', maxshape=(None), shape=(total_length,), dtype=cat[cols].dtype)
+        f['catalog/unsheared'][iter_end:iter_end+len(cat)] = cat[cols]
+
+        for sheared in ['1p','1m','2p','2m']:
+            append_sheared_table(f,cat,i,sheared,iter_end)
+
+        iter_end += len(cat)
+
+    h5file.close()
+
+
+class Testsuite(object):
+    """
+    Testsuite manager class. Initiated with a yaml file path or dictionary that contains necessary settings and instructions.
+    """
+
+    def __init__( self, yaml ):
+
+        # Read in yaml information
+        if isinstance(param_file, string_types):
+
+            self.params     = yaml.load(open(param_file))
+            self.param_file = param_file
+
+        else:
+
+            self.params     = param_file
+
+        # Archive yaml file used for results
+        self.save_input_yaml()
+
+        # Set up classes that manage data
+        # Source is an HDF5 file.
+        if params['source'] == 'hdf5':
+            self.source  = H5Source(self.params)
+
+        # Source is a desdm table
+        elif params['source'] == 'desdm':
+            self.source  = DESDMSource(self.params)
+
+        # Source is an LSST thing
+        elif testsuite.params['source'] == 'lsstdm':
+            self.source  = LSSTDMSource(self.params)
+
+        else:
+            raise NameError('Something went wrong with parsing your source.')
+
+        self.selector   = Selector(self)
+
+        if self.params['cal_type'] == None:
+            self.calibrator = NoCalib(self)
+        elif self.params['cal_type'] == 'mcal':
+            self.calibrator = MetaCalib(self)
+        elif self.params['cal_type'] == 'classic':
+            self.calibrator = ClassCalib(self)
+        else:
+            raise NameError('Something went wrong with parsing your calibration type.')
+
+        # Run tests
+        if 'split_mean' in self.params:
+            LinearSplit(self)
+
+    def file_path( self, subdir, name, var=None, var2=None, ftype='txt' ):
+        """
+        Set up a file path, and create the path if it doesn't exist.
+        """
+
+        if var is not None:
+            name += '_' + var
+        if var2 is not None:
+            name += '_' + var2
+        name += '.' + ftype
+
+        fpath = os.path.join(self.params['output'],self.param_file[:self.param_file.index('.')],subdir)
+
+        if os.path.exists(fpath)
+            if not self.params['output_exists']:
+                raise IOError('Output directory already exists. Set output_exists to True to use existing output directory at your own peril.')
+        else:
+            os.mkdir(fpath)
+            self.params['output_exists'] = True
+
+        return os.path.join(fpath,name)
+
+    def save_input_yaml( self ):
+        """
+        Arxiv input yaml settings.
+        """
+
+        fpath = self.file_path(self,'',self.param_file,ftype='yaml')
+        with open(fpath, 'w') as outfile:
+            yaml.dump(self.params, outfile, default_flow_style=False)
+
+    def write_table( self, table, subdir, name, var=None, var2=None):
+        """
+        Save a text table to file. Table must be a numpy-compatible array.
+        """
+
+        fpath = self.file_path(subdir,name,var=var,var2=var2)
+        np.savetxt(fpath,table)
+
+class H5Source(SourceParser):
+    """
+    A class to manage the actual reading or downloading of data from HDF5 sources. 
+    """
+
+    def __init__( self, params ):
+
+        super(H5Source,self).__init__(params)
+
+    def open( self ):
+
+        if 'filename' not in self.params.keys():
+            raise NameError('Must provide a filename for hdf5 source.')
+        if 'table' not in self.params.keys():
+            raise NameError('Must specify table name for hdf5 file.')
+        if type(self.params['table']) is not list:
+            raise TypeError('Table must be provided as a list of names (even a list of one).')
+
+        if 'group' in self.params.keys():
+
+            self.hdf = h5py.File(self.params['filename']+'.h5', mode = 'r+')[self.params['group']]
+            # save length of tables
+            self.size = self.hdf[self.params['table'][0]].shape[0]
+            # save all column names
+            self.cols = self.hdf[self.params['table'][0]].dtype.fields.keys()
+
+            # Loop over tables and save convenience information
+            for t in self.params['table']:
+                if self.hdf[t].shape[0] != self.size:
+                    raise TypeError('Length of sheared tables in hdf5 file must match length of unsheared table.')
+
+            if len(self.params['table'])>1:
+                # save sheared column names
+                self.sheared_cols = self.hdf[self.params['table'][1]].dtype.fields.keys()
+
+        else:
+
+            raise NameError('Need group name for hdf5 file.')
+
+    def read( self, col=None, rows=None, nosheared=False ):
+
+        def add_out( table, rows, col ):
+            """
+            Extract a portion of a column from the file.
+            """
+
+            if rows is not None:
+                if hasattr(rows,'__len__'):
+                    if len(rows==2):
+                        out = self.hdf[table][col][rows[0]:rows[1]] 
+                else:
+                    out = self.hdf[table][col][rows] 
+            else:
+                out = self.hdf[table][col][:] 
+
+            return out
+
+        if col is None:
+            raise NameError('Must specify column.')
+
+        out = []
+        # For metacal file, loop over tables and return list of 5 unsheared+sheared values for column (or just unsheraed if 'nosheared' is true or there doesn't exist sheared values for this column) 
+        # For classic file, get single column.
+        # For both metacal and classic files, output is a list of columns (possible of length 1)
+        for i,t in enumerate(table):
+            if i==0:
+                if col not in self.hdf[t].dtype.fields.keys():
+                    raise NameError('Col '+col+' not found in hdf5 file.')
+            else:
+                if nosheared:
+                    continue
+                if col not in self.sheared_cols:
+                    continue
+                if col not in hdf[t].dtype.fields.keys()
+                    raise NameError('Col '+col+' not found in sheared table '+t+' of hdf5 file.')
+
+            if rows is not None:
+                out.append( add_out(t,rows,col) )
+            else:
+                out.append( add_out(t,None,col) )
+
+        return out
+
+    def close( self ):
+
+        self.hdf.close()
+
+class DESDMSource(SourceParser):
+    """
+    A class to manage the actual reading or downloading of data from DESDM sources. 
+    """
+
+    def __init__( self ):
+        raise NotImplementedError('You should write this.')
+
+
+class LSSTDMSource(SourceParser):
+    """
+    A class to manage the actual reading or downloading of data from LSSTDM sources. 
+    """
+
+    def __init__( self ):
+        raise NotImplementedError('You should write this.')
+
+
+class SourceParser(object):
+    """
+    A class to manage the actual reading or downloading of data from external sources. 
+    Initiate with a testsuite param dictionary.
+    To use later: source_parser.read(...). All the messy details are hidden.
+    """
+
+    def __init__( self, params ):
+        self.params = params
+        self.open()
+
+    def open( self ):
+        raise NotImplementedError('Subclass '+self.__class__.__name__+' should have method open().')
+
+    def read( self ):
+        raise NotImplementedError('Subclass '+self.__class__.__name__+' should have method read().')
+
+    def close( self ):
+        raise NotImplementedError('Subclass '+self.__class__.__name__+' should have method close().')
+
+    def __del__( self ):
+        """
+        Close connection to external data sources.
+        """
+
+        self.close()
+
+class Selector(object):
+    """
+    A class to manage masking and selections of the data.
+    Initiate with a testsuite object.
+    Initiation will parse the 'select_cols' conditions in the yaml file and create a limiting mask 'mask_', ie, an 'or' of the individual unsheared and sheared metacal masks. The individual masks (list of 1 or 5 masks) are 'mask'.
+    """
+
+    def __init__( self, params, source ):
+        self.params = params
+        self.source = source
+        self.build_limiting_mask()
+
+    def build_limiting_mask( self ):
+        """
+        Build the limiting mask for use in discarding any data that will never be used.
+        """
+
+        # Setup mask file cache path.
+        mask_file = self.file_path('cache','mask',ftype='pickle')
+        if self.params['load_cache']:
+            # if mask cache exists, read mask from pickle and skip parsing yaml selection conditions.
+
+            if os.exists(mask_file):
+                self.mask, self.mask_ = load_obj(mask_file)
+
+        if not hasattr(self,'mask'):
+            # mask cache doesn't exist, or you chose to ignore it, so masks are built from yaml selection conditions
+            # set up 'empty' mask
+            if self.params['cal_type']=='mcal':
+                self.mask = np.repeat(np.ones(self.source.size, dtype=bool),5)
+            else:
+                self.mask = [np.ones(self.source.size, dtype=bool)]
+
+            # For each of 'select_cols' in yaml file, read in the data and iteratively apply the appropriate mask
+            for i,select_col in enumerate(self.params['select_cols']):
+                cols = self.source.read(col=select_col)
+                for j,col in enumerate(cols):
+                    self.mask[j] = self.mask[j] & eval(self.params['select_exp'][i])
+
+            # Loop over unsheared and sheared mask arrays and build limiting mask
+            self.mask_ = np.zeros(self.source.size, dtype=bool)
+            for mask_ in self.mask:
+                self.mask_ = self.mask_ | mask_
+            # Convert to index arrays
+            self.mask_ = np.where(self.mask_)[0]
+
+            # Cut down masks to the limiting mask and convert to index arrays
+            # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
+            for i in range(len(self.mask)):
+                self.mask[i] = self.mask[self.mask_]
+                self.mask[i] = np.where(self.mask[i])[0]
+
+            # save cache of masks to speed up reruns
+            save_obj( mask_file, [self.mask, self.mask_])
+
+    def get_col( self, col, nosheared=False ):
+        """
+        Wrapper to retrieve a column of data from the source and trim to the limiting mask (mask_)
+        """
+
+        # x at this point is the full column
+        x = self.source.read(col=col, nosheared=nosheared)
+
+        # trim to mask_ and return
+        return [ x[i][self.mask_] for i in range(len(x)) ]
+
+    def get_masked( self, x, mask ):
+        """
+        Accept a mask and column(s), apply the mask jointly with selector.mask (mask from yaml selection) and return masked array.
+        """
+
+        if type(mask) is not list:
+            mask = [ mask ]
+
+        if type(x) is not list:
+            if np.isscalar(x):
+                return x
+            else:
+                return x[self.mask[0][mask[0]]]
+
+        if len(x) == 1:
+            if np.isscalar(x[0]):
+                return x
+            else:
+                return [ x[0][self.mask[0][mask[0]]] ]
+
+        return [ x_[self.mask[i][mask[i]]] for i,x_ in enumerate(x) ]
+
+    def get_mask( self, mask ):
+        """
+        Same as get_masked, but only return the mask.
+        """
+
+        if type(mask) is not list:
+            mask = [ mask ]
+
+        return [ self.mask[i][mask_[i]] for i,mask_ in enumerate(mask) ]
+
+
+class NoCalib(Calibrator)
+    """
+    A class to manage calculating and returning calibration factors and weights for a general catalog without shear corrections.
+    """
+
+    def __init__( self, params, selector ):
+
+        super(NoCalib,self).__init__(params,selector)
+
+        self.Rg1 = self.Rg2 = 1.
+        self.c1 = self.c2 = 0.
+        self.w = np.ones(1)
+        if 'w' in self.params:
+            if self.params['w'] is not None:
+                self.w = self.selector.get_col(self.params['w'])
+
+    def select_resp(self,col,e,mask,w,ws):
+        """
+        Return a zero selection response.
+        """
+        return 0.
+
+
+class MetaCalib(Calibrator)
+    """
+    A class to manage calculating and returning calibration factors and weights for a metacal catalog.
+    """
+
+    def __init__( self, params, selector ):
+
+        super(MetaCalib,self).__init__(params,selector)
+
+        self.Rg1 = self.Rg2 = 1.
+        if 'Rg' in self.params:
+            if self.params['Rg'] is not None:
+                self.Rg1 = self.selector.get_col(self.params['Rg'][0])
+                self.Rg2 = self.selector.get_col(self.params['Rg'][1])
+        self.c1 = self.c2 = 0.
+        if 'c' in self.params:
+            if self.params['c'] is not None:
+                self.c1 = self.selector.get_col(self.params['c'][0])
+                self.c2 = self.selector.get_col(self.params['c'][1])
+        self.w = np.ones(5)
+        if 'w' in self.params:
+            if self.params['w'] is not None:
+                self.w = self.selector.get_col(self.params['w'])
+
+    def select_resp(self,col,e,mask,w,ws):
+        """
+        Get the selection response.
+        """
+
+        # if an ellipticity column, calculate and return the selection response and weight
+        if col == self.params['e'][0]:
+            mask_ = self.selector.get_mask(mask)
+            Rs = np.sum(e[mask_[1]]*w[1])/ws[1]-np.sum(e[mask_[2]]*w[2])/ws[2]
+        elif col == self.params['e'][1]:
+            mask_ = self.selector.get_mask(mask)
+            Rs = np.sum(e[mask_[3]]*w[3])/ws[3]-np.sum(e[mask_[4]]*w[4])/ws[4]
+        else:
+            return 0.
+
+        Rs /= 2.*self.params['dg']
+
+        return Rs
+
+
+class ClassicCalib(Calibrator)
+    """
+    A class to manage calculating and returning calibration factors and weights for a metacal catalog.
+    """
+
+    def __init__( self, params, selector ):
+
+        super(ClassCalib,self).__init__(params,selector)
+
+        self.Rg1 = self.Rg2 = 1.
+        if 'Rg' in self.params:
+            if self.params['Rg'] is not None:
+                self.Rg1 = self.selector.get_col(self.params['Rg'][0])
+                self.Rg2 = self.selector.get_col(self.params['Rg'][1])
+
+        self.c1 = self.c2 = 0.
+        if 'c' in self.params:
+            if self.params['c'] is not None:
+                self.c1 = self.selector.get_col(self.params['c'][0])
+                self.c2 = self.selector.get_col(self.params['c'][1])
+
+        self.w  = np.ones(1)
+        if 'w' in self.params:
+            if self.params['w'] is not None:
+                self.w = self.selector.get_col(self.params['w'])
+
+    def select_resp(self,col,e,mask,w,ws):
+        """
+        Return a zero selection response.
+        """
+        return 0.
+
+
+class Calibrator(object):
+    """
+    A class to manage calculating and returning calibration factors and weights for the catalog.
+    Initiate with a testsuite params object.
+    When initiated, will read in the shear response (or m), additive corrections (or c), and weights as requested in the yaml file. These are a necessary overhead that will be stored in memory, but truncated to the limiting mask (selector.mask_), so not that bad.
+    """
+
+    def __init__( self, params, selector ):
+
+        self.params = params
+
+    def get_w(self,mask,return_full_w=False):
+        """
+        Get the weights and the sum of the weights.
+        """
+
+        # cut weight to selection and calculate the sum for averages.
+        w = self.selector.get_masked(self.w,mask)
+        ws = [np.sum(w_) for w_ in w]
+
+        if return_full_w:
+            return w,ws
+        else:
+            return w[0],ws
+
+    def calibrate(self,col,val,mask=np.repeat(np.s_[:],5),return_full_w=False,weight_only=False):
+        """
+        Return the calibration factor and weights, given potentially an ellipticity and selection.
+        """
+
+        # Get the weights
+        w = self.get_w(self,mask,return_full_w=return_full_w)
+        if return_full_w:
+            w_ = w[0]
+        else:
+            w_ = w
+        if weight_only:
+            return w
+
+        # Get a selection response
+        Rs = self.select_resp(col,val,mask,return_full_w=return_full_w)
+
+        # Check if an ellipticity - if so, return real calibration factors
+        if col == self.params['e'][0]:
+            Rg1 = self.selector.get_masked(self.Rg1,mask)
+            R = np.sum(Rg1*w_)/ws
+            R += Rs
+            c = self.selector.get_masked(self.c1,mask)
+            return R,c,w
+        elif col == self.params['e'][1]:
+            Rg2 = self.selector.get_masked(self.Rg2,mask)
+            R = np.sum(Rg2*w_)/ws
+            R += Rs
+            c = self.selector.get_masked(self.c2,mask)
+            return R,c,w
+        else:
+            return None,None,w
+
+
+class Splitter(object):
+    """
+    A class for managing splitting the data set into bins and accessing the binned data.
+    Initiate with a testsuite object.
+    """
+
+    def __init__( self, params, selector, calibrator ):
+
+        self.params     = params
+        self.selector   = selector
+        self.calibrator = calibrator
+        self.edges      = self.params['linear_bins']
+
+        if 'split_x' in self.params:
+            for col in self.params['split_x']:
+                if col not in self.source.cols:
+                    raise NameError(col + ' not in source.')
+        else:
+            self.params['split_x'] = self.source.cols
+
+        return
+
+    def get_x( self, col, xbin=None, return_mask=False ):
+        """
+        Get the 'x' column - the column you're binning the data by. 
+        If you haven't already called splitter with this x col, the data will be read from the source and the binning edges will be set up.
+        Optionally give a bin number, it will return the portion of the x array that falls in that bin. Can also optionally return the mask for that bin.
+        """
+
+        # If column doesn't already exist in splitter, read the data and define bins in self.split().
+        if (not hasattr(self,'xcol')) or (col != self.xcol):
+            self.xcol = col
+            self.split(col)
+
+        # If not asking for a bin selection, return
+        if xbin is None:
+            return
+
+        # If asking for a bin selection, find the appropriate mask and return that part of the x array.
+        start,end = self.get_bin_edges(xbin)
+        mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))] # np.s_ creates an array slice 'object' that can be passed to functions
+        if return_mask:
+            return self.selector.get_masked(self.x,mask),mask
+        return self.selector.get_masked(self.x,mask)
+
+    def get_y( self, col, xbin=None, return_mask=False ):
+        """
+        Get the 'y' column - the column you're doing stuff with in bins of the x col. If you haven't called splitter.get_x(), an error will be raised, since you haven't defined what you're binning against.  
+        If you haven't already called splitter with this y col, the data will be read from the source.
+        Optionally give a bin number, it will return the portion of the y array that falls in that bin. Can also optionally return the mask for that bin.
+        """
+
+        if not hasattr(self,'xcol'):
+            raise NameError('There is no x column associated with this splitter.')
+
+
+        # If column doesn't already exist in splitter, read the data and order it to match x ordering for efficient splitting.
+        if (not hasattr(self,'ycol')) or (col != self.ycol):
+            self.ycol = col
+            self.y = self.selector.get_col(col)
+            for i,y_ in enumerate(self.y):
+                self.y[i] = y_[self.order[i]]
+
+        # If not asking for a bin selection, return
+        if xbin is None:
+            return
+
+        # If asking for a bin selection, find the appropriate mask and return that part of the y array.
+        start,end = self.get_bin_edges(xbin)
+        mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))]
+        if return_mask:
+            return self.selector.get_masked(self.y,mask),mask
+        return self.selector.get_masked(self.y,mask)
+
+    def split( self, col ):
+        """
+        Reads in a column (x) and sorts it. If you allowed cache reading, it will check if you've already done this and just read it in from the pickle cach. Then finds the edges of the bins you've requested.
+        """
+
+            # Check if cache file exists and use it if you've requested that.
+            sort_file = self.file_path('cache','sort',var=col,ftype='pickle')
+            if self.params['load_cache']:
+
+                if os.exists(sort_file):
+                    self.order,self.x = load_obj(sort_file)
+
+            # Cache file doesn't exist or you're remaking it
+            if not hasattr(self,'order'):
+                # Read x
+                self.x     = self.selector.get_col(col)
+                # save the index order to sort the x array for more efficient binning
+                self.order = []
+                for i,x_ in enumerate(self.x):
+                    self.order.append( np.argsort(x_) )
+                    self.x[i] = x_[self.order]
+                # save cache of sorted x and its order relative to the source
+                save_obj(sort_file,[self.order,self.x])
+
+            # get bin edges
+            self.get_edge_idx()
+
+        return
+
+    def get_edge_idx( self ):
+        """
+        Find the bin edges that split the data into the ranges you set in the yaml or into a number of equal-weighted bins.
+        """
+
+        edges = []
+        if hasattr(self.edges,"__len__"):
+            # You provided a set of bin edges. Find the indexes that are associated with those limits.
+
+            self.bins = len(self.edges)-1
+            for x_,w_ in tuple(zip(self.x,w)):
+                edges.append( np.searchsorted(x_, self.edges) )
+            self.edges = edges
+
+        else:
+            # You've provided a number of bins. Get the weights and define bin edges such that there exists equal weight in each bin.
+            w = self.calibrator.calibrate(self.xcol,self.x,return_full_w=True,weight_only=True)
+            self.bins = self.edges
+            for x_,w_ in tuple(zip(self.x,w)):
+                cumsum = (x_*w_).cumsum() / (x_*w_).sum()
+                edges.append( np.searchsorted(cumsum, np.linspace(0, 1, self.edges+1, endpoint=True)) )
+            self.edges = edges
+
+        return
+
+    def get_bin_edges( self, xbin ):
+        """
+        Helper function to return the lower and upper bin edges.
+        """
+
+        return [edge[i][xbin] for edge in self.edges],[edge[i][xbin+1] for edge in self.edges]
+
+
+class LinearSplit(object):
+    """
+    Test class to do linear splitting (operations on binned data not at the 2pt level).
+    Instantiate with a testsuite object and opetionally a function to operate on the bins (not fully implemented).
+    """
+
+    def __init__( self, params, testsuite, calibrator, func=np.mean, **kwargs ):
+
+        if self.params['split_mean'] is not None:
+            for col in self.params['split_mean']:
+                if col not in self.source.cols:
+                    raise NameError(col + ' not in source.')
+        else:
+            self.params['split_mean'] = self.source.cols
+
+        self.testsuite = testsuite
+        self.splitter  = splitter(testsuite)
+        self.split_y   = self.params['split_mean']
+        self.step      = 0
+
+        # 'step' and this separate call is meant as a placeholder for potential parallelisation
+        self.iter_mean()
+
+    def iter_mean( self ):
+        """
+        Loop over x columns (quantities binned by) and y columns (quantities to perform operations on in bins of x), perform the operations, and save the results
+        """
+
+        for x in self.params['split_x']:
+            xmean = []
+            ymean = []
+            ystd  = []
+            for y in self.params['split_mean']:
+                for xbin in range(self.splitter.bins):
+                    # get x array in bin xbin
+                    xval       = self.splitter.get_x(x,xbin)
+                    # get mean values of x in this bin
+                    xmean.append( self.mean(x,xval,return_std=False) )
+                    # get y array in bin xbin
+                    yval,mask  = self.splitter.get_y(y,xbin,return_mask=True)
+                    # get mean and std (for error) in this bin
+                    ymean_,ystd_ = self.mean(y,yval,mask=mask)
+                    ymean.append( ymean_ )
+                    ystd.append(  ystd_/np.sqrt(len(mask))  )
+
+            # Save results
+            table = np.array([xmean,ymean,ystd]).T
+            self.testsuite.write_table(table,'test_output','linear_split',var=x,var2=y)
+
+    def mean( self, col, x, mask=None, return_std=True, return_rms=False ):
+        """
+        Function to do mean, std, rms calculations
+        """
+
+        # Get response and weight.
+        if mask is None:
+            resp = self.calibrator.calibrate(y,yval)
+        else:
+            resp = self.calibrator.calibrate(y,yval,mask=mask)
+        R,c,w = resp
+
+        # do the calculation
+        if R is not None:
+            Rw = np.sum(w*R)
+            x  = np.copy(x)-c
+            if std:
+                Rw2 = np.sum(w*R**2)
+            else:
+                Rw = np.sum(w)
+                if std:
+                    Rw2 = Rw
+        else:
+            Rw = Rw2 = 1.
+
+        mean = np.sum(w*x)/Rw
+        if return_std:
+            std=np.sqrt(np.sum(w*(x-mean)**2)/Rw2)
+            if not return_rms:
+                return mean,std
+        if return_rms:
+            rms=np.sqrt(np.sum((w*x)**2)/Rw)
+            if not return_std:
+                return mean,rms
+
+        if not (return_std or return_rms):
+            return mean
+
+        return mean,std,rms
+
