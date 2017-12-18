@@ -151,20 +151,20 @@ class Testsuite(object):
         else:
             raise NameError('Something went wrong with parsing your source.')
 
-        self.selector   = Selector(self)
+        self.selector    = Selector(self.params,self.source)
 
         if self.params['cal_type'] == None:
-            self.calibrator = NoCalib(self)
+            self.calibrator = NoCalib(self.params,self.selector)
         elif self.params['cal_type'] == 'mcal':
-            self.calibrator = MetaCalib(self)
+            self.calibrator = MetaCalib(self.params,self.selector)
         elif self.params['cal_type'] == 'classic':
-            self.calibrator = ClassCalib(self)
+            self.calibrator = ClassCalib(self.params,self.selector)
         else:
             raise NameError('Something went wrong with parsing your calibration type.')
 
         # Run tests
         if 'split_mean' in self.params:
-            LinearSplit(self)
+            LinearSplit(self.params,self,self.calibtrator)
 
     def file_path( self, subdir, name, var=None, var2=None, ftype='txt' ):
         """
