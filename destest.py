@@ -598,12 +598,13 @@ class Splitter(object):
     Initiate with a testsuite object.
     """
 
-    def __init__( self, params, selector, calibrator, source ):
+    def __init__( self, params, testsuite, selector, calibrator, source ):
 
         self.params     = params
         self.selector   = selector
         self.calibrator = calibrator
         self.source     = source
+        self.testsuite  = testsuite
         self.edges      = self.params['linear_bins']
 
         if 'split_x' in self.params:
@@ -749,7 +750,7 @@ class LinearSplit(object):
 
         self.testsuite  = testsuite
         self.calibrator = calibrator
-        self.splitter   = Splitter(params,selector,calibrator,source)
+        self.splitter   = Splitter(params,testsuite,selector,calibrator,source)
         self.split_y    = self.params['split_mean']
         self.step       = 0
 
