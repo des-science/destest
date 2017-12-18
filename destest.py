@@ -737,6 +737,7 @@ class LinearSplit(object):
     def __init__( self, params, testsuite, calibrator, source, func=np.mean, **kwargs ):
 
         self.params = params
+        self.source = source
         if self.params['split_mean'] is not None:
             for col in self.params['split_mean']:
                 if col not in self.source.cols:
@@ -746,7 +747,6 @@ class LinearSplit(object):
 
         self.testsuite  = testsuite
         self.calibrator = calibrator
-        self.source     = source
         self.splitter   = splitter(testsuite)
         self.split_y    = self.params['split_mean']
         self.step       = 0
