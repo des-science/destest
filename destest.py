@@ -613,6 +613,11 @@ class Splitter(object):
         else:
             self.params['split_x'] = self.source.cols
 
+        if hasattr(self.edges,"__len__"):
+            self.bins = len(self.edges)-1
+        else:
+            self.bins = self.edges
+
         return
 
     def get_x( self, col, xbin=None, return_mask=False ):
@@ -704,16 +709,12 @@ class Splitter(object):
         edges = []
         if hasattr(self.edges,"__len__"):
             # You provided a set of bin edges. Find the indexes that are associated with those limits.
-
-            self.bins = len(self.edges)-1
             for x_,w_ in tuple(zip(self.x,w)):
                 edges.append( np.searchsorted(x_, self.edges) )
             self.edges = edges
-
         else:
             # You've provided a number of bins. Get the weights and define bin edges such that there exists equal weight in each bin.
             w = self.calibrator.calibrate(self.xcol,self.x,return_full_w=True,weight_only=True)
-            self.bins = self.edges
             for x_,w_ in tuple(zip(self.x,w)):
                 cumsum = (x_*w_).cumsum() / (x_*w_).sum()
                 edges.append( np.searchsorted(cumsum, np.linspace(0, 1, self.edges+1, endpoint=True)) )
