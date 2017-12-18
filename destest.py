@@ -137,15 +137,15 @@ class Testsuite(object):
 
         # Set up classes that manage data
         # Source is an HDF5 file.
-        if params['source'] == 'hdf5':
+        if self.params['source'] == 'hdf5':
             self.source  = H5Source(self.params)
 
         # Source is a desdm table
-        elif params['source'] == 'desdm':
+        elif self.params['source'] == 'desdm':
             self.source  = DESDMSource(self.params)
 
         # Source is an LSST thing
-        elif testsuite.params['source'] == 'lsstdm':
+        elif self.params['source'] == 'lsstdm':
             self.source  = LSSTDMSource(self.params)
 
         else:
@@ -177,10 +177,6 @@ class Testsuite(object):
             name += '_' + var2
         name += '.' + ftype
 
-        print self.params['output']
-        print self.param_file
-        print self.param_file[:self.param_file.index('.')]
-        print subdir
         fpath = os.path.join(self.params['output'],self.param_file[:self.param_file.index('.')],subdir)
 
         if os.path.exists(fpath):
@@ -197,7 +193,7 @@ class Testsuite(object):
         Arxiv input yaml settings.
         """
 
-        fpath = self.file_path('',self.param_file,ftype='yaml')
+        fpath = self.file_path('',self.param_file[:self.param_file.index('.')],ftype='yaml')
         print 'saving input yaml to: '+fpath
         with open(fpath, 'w') as outfile:
             yaml.dump(self.params, outfile, default_flow_style=False)
