@@ -393,7 +393,7 @@ class Selector(object):
             self.mask_ = np.where(self.mask_)[0]
 
             # save cache of masks to speed up reruns
-            save_obj( mask_file, [self.mask, self.mask_])
+            save_obj( [self.mask, self.mask_], mask_file )
 
     def get_col( self, col, nosheared=False ):
         """
@@ -694,7 +694,7 @@ class Splitter(object):
                 self.order.append( np.argsort(x_) )
                 self.x[i] = x_[self.order]
             # save cache of sorted x and its order relative to the source
-            save_obj(sort_file,[self.order,self.x])
+            save_obj( [self.order,self.x], sort_file )
 
         # get bin edges
         self.get_edge_idx()
