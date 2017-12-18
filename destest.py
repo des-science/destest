@@ -151,7 +151,7 @@ class Testsuite(object):
         else:
             raise NameError('Something went wrong with parsing your source.')
 
-        self.selector    = Selector(self.params,self.source)
+        self.selector    = Selector(self.params,self,self.source)
 
         if self.params['cal_type'] == None:
             self.calibrator = NoCalib(self.params,self.selector)
@@ -348,9 +348,10 @@ class Selector(object):
     Initiation will parse the 'select_cols' conditions in the yaml file and create a limiting mask 'mask_', ie, an 'or' of the individual unsheared and sheared metacal masks. The individual masks (list of 1 or 5 masks) are 'mask'.
     """
 
-    def __init__( self, params, source ):
-        self.params = params
-        self.source = source
+    def __init__( self, params, testsuite, source ):
+        self.params    = params
+        self.testsuite = testsuite
+        self.source    = source
         self.build_limiting_mask()
 
     def build_limiting_mask( self ):
@@ -359,7 +360,7 @@ class Selector(object):
         """
 
         # Setup mask file cache path.
-        mask_file = self.file_path('cache','mask',ftype='pickle')
+        mask_file = self.testsuite.file_path('cache','mask',ftype='pickle')
         if self.params['load_cache']:
             # if mask cache exists, read mask from pickle and skip parsing yaml selection conditions.
 
@@ -679,7 +680,7 @@ class Splitter(object):
         """
 
         # Check if cache file exists and use it if you've requested that.
-        sort_file = self.file_path('cache','sort',var=col,ftype='pickle')
+        sort_file = self.testsuite.file_path('cache','sort',var=col,ftype='pickle')
         if self.params['load_cache']:
 
             if os.exists(sort_file):
