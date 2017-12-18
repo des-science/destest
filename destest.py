@@ -449,6 +449,7 @@ class Calibrator(object):
     def __init__( self, params, selector ):
 
         self.params = params
+        self.selector = selector
 
     def get_w(self,mask,return_full_w=False):
         """
