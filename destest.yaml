@@ -16,6 +16,8 @@ output_exists : True
 split_mean : ['e1','e2','flux_r']
 
 # Data source
+# calibration type
+cal_type   : 'mcal'
 # Type of data source. Currently only works for 'hdf5'
 source     : 'hdf5'
 # name of file
