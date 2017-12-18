@@ -373,6 +373,7 @@ class Selector(object):
             self.mask = [np.ones(self.source.size, dtype=bool)]
             if self.params['cal_type']=='mcal':
                 self.mask = self.mask * 5
+            print type(self.mask[0]) is list
 
             # For each of 'select_cols' in yaml file, read in the data and iteratively apply the appropriate mask
             for i,select_col in enumerate(self.params['select_cols']):
@@ -388,7 +389,7 @@ class Selector(object):
             # Cut down masks to the limiting mask and convert to index arrays
             # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
             for i in range(len(self.mask)):
-                print self.mask[i],self.mask_
+                print self.mask[i],self.mask_,type(self.mask[i]) is list
                 self.mask[i] = self.mask[self.mask_]
                 self.mask[i] = np.where(self.mask[i])[0]
             self.mask_ = np.where(self.mask_)[0]
