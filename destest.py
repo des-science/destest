@@ -466,7 +466,7 @@ class Calibrator(object):
         else:
             return w[0],ws
 
-    def calibrate(self,col,val,mask=np.repeat(np.s_[:],5),return_full_w=False,weight_only=False):
+    def calibrate(self,col,val,mask=[np.s_[:]]*5,return_full_w=False,weight_only=False):
         """
         Return the calibration factor and weights, given potentially an ellipticity and selection.
         """
