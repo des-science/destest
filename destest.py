@@ -119,7 +119,7 @@ class Testsuite(object):
     Testsuite manager class. Initiated with a yaml file path or dictionary that contains necessary settings and instructions.
     """
 
-    def __init__( self, yaml ):
+    def __init__( self, param_file ):
 
         # Read in yaml information
         if isinstance(param_file, string_types):
