@@ -302,14 +302,14 @@ class H5Source(SourceParser):
         # For both metacal and classic files, output is a list of columns (possible of length 1)
         for i,t in enumerate(self.params['table']):
             if i==0:
-                if col not in self.hdf[self.params['group']][t].dtype.fields.keys():
+                if col not in self.hdf[self.params['group']][t].keys():
                     raise NameError('Col '+col+' not found in hdf5 file.')
             else:
                 if nosheared:
                     continue
                 if col not in self.sheared_cols:
                     continue
-                if col not in hdf[self.params['group']][t].dtype.fields.keys():
+                if col not in hdf[self.params['group']][t].keys():
                     raise NameError('Col '+col+' not found in sheared table '+t+' of hdf5 file.')
 
             if rows is not None:
