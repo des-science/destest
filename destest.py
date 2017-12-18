@@ -255,20 +255,20 @@ class H5Source(SourceParser):
 
         if 'group' in self.params.keys():
 
-            self.hdf = h5py.File(self.params['filename'], mode = 'r+')[self.params['group']]
+            self.hdf = h5py.File(self.params['filename'], mode = 'r+')
             # save length of tables
-            self.size = self.hdf[self.params['table'][0]].shape[0]
+            self.size = self.hdf[self.params['group']][self.params['table'][0]].shape[0]
             # save all column names
-            self.cols = self.hdf[self.params['table'][0]].dtype.fields.keys()
+            self.cols = self.hdf[self.params['group']][self.params['table'][0]].dtype.fields.keys()
 
             # Loop over tables and save convenience information
             for t in self.params['table']:
-                if self.hdf[t].shape[0] != self.size:
+                if self.hdf[self.params['group']][t].shape[0] != self.size:
                     raise TypeError('Length of sheared tables in hdf5 file must match length of unsheared table.')
 
             if len(self.params['table'])>1:
                 # save sheared column names
-                self.sheared_cols = self.hdf[self.params['table'][1]].dtype.fields.keys()
+                self.sheared_cols = self.hdf[self.params['group']][self.params['table'][1]].dtype.fields.keys()
 
         else:
 
@@ -284,11 +284,11 @@ class H5Source(SourceParser):
             if rows is not None:
                 if hasattr(rows,'__len__'):
                     if len(rows==2):
-                        out = self.hdf[table][col][rows[0]:rows[1]] 
+                        out = self.hdf[self.params['group']][table][col][rows[0]:rows[1]] 
                 else:
-                    out = self.hdf[table][col][rows] 
+                    out = self.hdf[self.params['group']][table][col][rows] 
             else:
-                out = self.hdf[table][col][:] 
+                out = self.hdf[self.params['group']][table][col][:] 
 
             return out
 
@@ -301,14 +301,14 @@ class H5Source(SourceParser):
         # For both metacal and classic files, output is a list of columns (possible of length 1)
         for i,t in enumerate(table):
             if i==0:
-                if col not in self.hdf[t].dtype.fields.keys():
+                if col not in self.hdf[self.params['group']][t].dtype.fields.keys():
                     raise NameError('Col '+col+' not found in hdf5 file.')
             else:
                 if nosheared:
                     continue
                 if col not in self.sheared_cols:
                     continue
-                if col not in hdf[t].dtype.fields.keys():
+                if col not in hdf[self.params['group']][t].dtype.fields.keys():
                     raise NameError('Col '+col+' not found in sheared table '+t+' of hdf5 file.')
 
             if rows is not None:
