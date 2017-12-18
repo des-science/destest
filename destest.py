@@ -177,7 +177,7 @@ class Testsuite(object):
 
         fpath = os.path.join(self.params['output'],self.param_file[:self.param_file.index('.')],subdir)
 
-        if os.path.exists(fpath)
+        if os.path.exists(fpath):
             if not self.params['output_exists']:
                 raise IOError('Output directory already exists. Set output_exists to True to use existing output directory at your own peril.')
         else:
