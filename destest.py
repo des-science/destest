@@ -511,7 +511,7 @@ class NoCalib(Calibrator):
 
         self.Rg1 = self.Rg2 = 1.
         self.c1 = self.c2 = 0.
-        self.w = np.ones(1)
+        self.w = [1]
         if 'w' in self.params:
             self.w = self.selector.get_col(self.params['w'])
 
@@ -539,7 +539,7 @@ class MetaCalib(Calibrator):
         if 'c' in self.params:
             self.c1 = self.selector.get_col(self.params['c'][0])
             self.c2 = self.selector.get_col(self.params['c'][1])
-        self.w = np.ones(5)
+        self.w = [1] * 5
         if 'w' in self.params:
             self.w = self.selector.get_col(self.params['w'])
 
@@ -582,7 +582,7 @@ class ClassicCalib(Calibrator):
             self.c1 = self.selector.get_col(self.params['c'][0])
             self.c2 = self.selector.get_col(self.params['c'][1])
 
-        self.w  = np.ones(1)
+        self.w  = [1]
         if 'w' in self.params:
             self.w = self.selector.get_col(self.params['w'])
 
