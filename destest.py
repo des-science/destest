@@ -204,6 +204,35 @@ class Testsuite(object):
         fpath = self.file_path(subdir,name,var=var,var2=var2)
         np.savetxt(fpath,table)
 
+
+class SourceParser(object):
+    """
+    A class to manage the actual reading or downloading of data from external sources. 
+    Initiate with a testsuite param dictionary.
+    To use later: source_parser.read(...). All the messy details are hidden.
+    """
+
+    def __init__( self, params ):
+        self.params = params
+        self.open()
+
+    def open( self ):
+        raise NotImplementedError('Subclass '+self.__class__.__name__+' should have method open().')
+
+    def read( self ):
+        raise NotImplementedError('Subclass '+self.__class__.__name__+' should have method read().')
+
+    def close( self ):
+        raise NotImplementedError('Subclass '+self.__class__.__name__+' should have method close().')
+
+    def __del__( self ):
+        """
+        Close connection to external data sources.
+        """
+
+        self.close()
+
+
 class H5Source(SourceParser):
     """
     A class to manage the actual reading or downloading of data from HDF5 sources. 
@@ -309,33 +338,6 @@ class LSSTDMSource(SourceParser):
         raise NotImplementedError('You should write this.')
 
 
-class SourceParser(object):
-    """
-    A class to manage the actual reading or downloading of data from external sources. 
-    Initiate with a testsuite param dictionary.
-    To use later: source_parser.read(...). All the messy details are hidden.
-    """
-
-    def __init__( self, params ):
-        self.params = params
-        self.open()
-
-    def open( self ):
-        raise NotImplementedError('Subclass '+self.__class__.__name__+' should have method open().')
-
-    def read( self ):
-        raise NotImplementedError('Subclass '+self.__class__.__name__+' should have method read().')
-
-    def close( self ):
-        raise NotImplementedError('Subclass '+self.__class__.__name__+' should have method close().')
-
-    def __del__( self ):
-        """
-        Close connection to external data sources.
-        """
-
-        self.close()
-
 class Selector(object):
     """
     A class to manage masking and selections of the data.
@@ -435,6 +437,65 @@ class Selector(object):
         return [ self.mask[i][mask_[i]] for i,mask_ in enumerate(mask) ]
 
 
+class Calibrator(object):
+    """
+    A class to manage calculating and returning calibration factors and weights for the catalog.
+    Initiate with a testsuite params object.
+    When initiated, will read in the shear response (or m), additive corrections (or c), and weights as requested in the yaml file. These are a necessary overhead that will be stored in memory, but truncated to the limiting mask (selector.mask_), so not that bad.
+    """
+
+    def __init__( self, params, selector ):
+
+        self.params = params
+
+    def get_w(self,mask,return_full_w=False):
+        """
+        Get the weights and the sum of the weights.
+        """
+
+        # cut weight to selection and calculate the sum for averages.
+        w = self.selector.get_masked(self.w,mask)
+        ws = [np.sum(w_) for w_ in w]
+
+        if return_full_w:
+            return w,ws
+        else:
+            return w[0],ws
+
+    def calibrate(self,col,val,mask=np.repeat(np.s_[:],5),return_full_w=False,weight_only=False):
+        """
+        Return the calibration factor and weights, given potentially an ellipticity and selection.
+        """
+
+        # Get the weights
+        w = self.get_w(self,mask,return_full_w=return_full_w)
+        if return_full_w:
+            w_ = w[0]
+        else:
+            w_ = w
+        if weight_only:
+            return w
+
+        # Get a selection response
+        Rs = self.select_resp(col,val,mask,return_full_w=return_full_w)
+
+        # Check if an ellipticity - if so, return real calibration factors
+        if col == self.params['e'][0]:
+            Rg1 = self.selector.get_masked(self.Rg1,mask)
+            R = np.sum(Rg1*w_)/ws
+            R += Rs
+            c = self.selector.get_masked(self.c1,mask)
+            return R,c,w
+        elif col == self.params['e'][1]:
+            Rg2 = self.selector.get_masked(self.Rg2,mask)
+            R = np.sum(Rg2*w_)/ws
+            R += Rs
+            c = self.selector.get_masked(self.c2,mask)
+            return R,c,w
+        else:
+            return None,None,w
+            
+
 class NoCalib(Calibrator):
     """
     A class to manage calculating and returning calibration factors and weights for a general catalog without shear corrections.
@@ -533,65 +594,6 @@ class ClassicCalib(Calibrator):
         Return a zero selection response.
         """
         return 0.
-
-
-class Calibrator(object):
-    """
-    A class to manage calculating and returning calibration factors and weights for the catalog.
-    Initiate with a testsuite params object.
-    When initiated, will read in the shear response (or m), additive corrections (or c), and weights as requested in the yaml file. These are a necessary overhead that will be stored in memory, but truncated to the limiting mask (selector.mask_), so not that bad.
-    """
-
-    def __init__( self, params, selector ):
-
-        self.params = params
-
-    def get_w(self,mask,return_full_w=False):
-        """
-        Get the weights and the sum of the weights.
-        """
-
-        # cut weight to selection and calculate the sum for averages.
-        w = self.selector.get_masked(self.w,mask)
-        ws = [np.sum(w_) for w_ in w]
-
-        if return_full_w:
-            return w,ws
-        else:
-            return w[0],ws
-
-    def calibrate(self,col,val,mask=np.repeat(np.s_[:],5),return_full_w=False,weight_only=False):
-        """
-        Return the calibration factor and weights, given potentially an ellipticity and selection.
-        """
-
-        # Get the weights
-        w = self.get_w(self,mask,return_full_w=return_full_w)
-        if return_full_w:
-            w_ = w[0]
-        else:
-            w_ = w
-        if weight_only:
-            return w
-
-        # Get a selection response
-        Rs = self.select_resp(col,val,mask,return_full_w=return_full_w)
-
-        # Check if an ellipticity - if so, return real calibration factors
-        if col == self.params['e'][0]:
-            Rg1 = self.selector.get_masked(self.Rg1,mask)
-            R = np.sum(Rg1*w_)/ws
-            R += Rs
-            c = self.selector.get_masked(self.c1,mask)
-            return R,c,w
-        elif col == self.params['e'][1]:
-            Rg2 = self.selector.get_masked(self.Rg2,mask)
-            R = np.sum(Rg2*w_)/ws
-            R += Rs
-            c = self.selector.get_masked(self.c2,mask)
-            return R,c,w
-        else:
-            return None,None,w
 
 
 class Splitter(object):
