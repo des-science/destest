@@ -42,9 +42,9 @@ e           : ['e1','e2'] # Must exist at least as an empty list
 # len 2 array with column names for shear response (or m)
 Rg          : ['R11','R22']
 # len 2 array with column names for c (additive correction)
-c           : None
+# c           : None
 # column name for weight
-w           : None
+# w           : None
 
 
 # Pretty name dicts

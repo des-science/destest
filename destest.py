@@ -512,8 +512,7 @@ class NoCalib(Calibrator):
         self.c1 = self.c2 = 0.
         self.w = np.ones(1)
         if 'w' in self.params:
-            if self.params['w'] is not None:
-                self.w = self.selector.get_col(self.params['w'])
+            self.w = self.selector.get_col(self.params['w'])
 
     def select_resp(self,col,e,mask,w,ws):
         """
@@ -533,18 +532,15 @@ class MetaCalib(Calibrator):
 
         self.Rg1 = self.Rg2 = 1.
         if 'Rg' in self.params:
-            if self.params['Rg'] is not None:
-                self.Rg1 = self.selector.get_col(self.params['Rg'][0])
-                self.Rg2 = self.selector.get_col(self.params['Rg'][1])
+            self.Rg1 = self.selector.get_col(self.params['Rg'][0])
+            self.Rg2 = self.selector.get_col(self.params['Rg'][1])
         self.c1 = self.c2 = 0.
         if 'c' in self.params:
-            if self.params['c'] is not None:
-                self.c1 = self.selector.get_col(self.params['c'][0])
-                self.c2 = self.selector.get_col(self.params['c'][1])
+            self.c1 = self.selector.get_col(self.params['c'][0])
+            self.c2 = self.selector.get_col(self.params['c'][1])
         self.w = np.ones(5)
         if 'w' in self.params:
-            if self.params['w'] is not None:
-                self.w = self.selector.get_col(self.params['w'])
+            self.w = self.selector.get_col(self.params['w'])
 
     def select_resp(self,col,e,mask,w,ws):
         """
@@ -577,20 +573,17 @@ class ClassicCalib(Calibrator):
 
         self.Rg1 = self.Rg2 = 1.
         if 'Rg' in self.params:
-            if self.params['Rg'] is not None:
-                self.Rg1 = self.selector.get_col(self.params['Rg'][0])
-                self.Rg2 = self.selector.get_col(self.params['Rg'][1])
+            self.Rg1 = self.selector.get_col(self.params['Rg'][0])
+            self.Rg2 = self.selector.get_col(self.params['Rg'][1])
 
         self.c1 = self.c2 = 0.
         if 'c' in self.params:
-            if self.params['c'] is not None:
-                self.c1 = self.selector.get_col(self.params['c'][0])
-                self.c2 = self.selector.get_col(self.params['c'][1])
+            self.c1 = self.selector.get_col(self.params['c'][0])
+            self.c2 = self.selector.get_col(self.params['c'][1])
 
         self.w  = np.ones(1)
         if 'w' in self.params:
-            if self.params['w'] is not None:
-                self.w = self.selector.get_col(self.params['w'])
+            self.w = self.selector.get_col(self.params['w'])
 
     def select_resp(self,col,e,mask,w,ws):
         """
