@@ -35,7 +35,6 @@ select_cols : ['snr','snr','size_ratio','flags']
 select_exp   : ['10<col','col<100','col>0.5','col==0']
 
 # Catalog dicts
-index       : 'coadd_objects_id'
 # len 2 array with column names for ellipticity
 e           : ['e1','e2'] # Must exist at least as an empty list
 # len 2 array with column names for shear response (or m)

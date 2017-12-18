@@ -256,14 +256,15 @@ class H5Source(SourceParser):
         if 'group' in self.params.keys():
 
             self.hdf = h5py.File(self.params['filename'], mode = 'r+')
-            # save length of tables
-            self.size = self.hdf[self.params['group']][self.params['table'][0]][self.params['index']].shape[0]
             # save all column names
             self.cols = self.hdf[self.params['group']][self.params['table'][0]].keys()
+            # save length of tables
+            self.size = self.hdf[self.params['group']][self.params['table'][0]][self.cols[0]].shape[0]
 
             # Loop over tables and save convenience information
             for t in self.params['table']:
-                if self.hdf[self.params['group']][t].shape[0] != self.size:
+                keys = self.hdf[self.params['group']][t].keys()
+                if self.hdf[self.params['group']][t][keys[0]].shape[0] != self.size:
                     raise TypeError('Length of sheared tables in hdf5 file must match length of unsheared table.')
 
             if len(self.params['table'])>1:
