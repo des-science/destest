@@ -300,7 +300,7 @@ class H5Source(SourceParser):
         # For metacal file, loop over tables and return list of 5 unsheared+sheared values for column (or just unsheraed if 'nosheared' is true or there doesn't exist sheared values for this column) 
         # For classic file, get single column.
         # For both metacal and classic files, output is a list of columns (possible of length 1)
-        for i,t in enumerate(table):
+        for i,t in enumerate(self.params['table']):
             if i==0:
                 if col not in self.hdf[self.params['group']][t].dtype.fields.keys():
                     raise NameError('Col '+col+' not found in hdf5 file.')
