@@ -494,7 +494,7 @@ class Calibrator(object):
             return R,c,w
         else:
             return None,None,w
-            
+
 
 class NoCalib(Calibrator):
     """
@@ -821,3 +821,8 @@ class LinearSplit(object):
 
         return mean,std,rms
 
+
+if __name__ == "__main__":
+    """
+    """
+    Testsuite( sys.argv[1] )
