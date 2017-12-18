@@ -434,7 +434,7 @@ class Selector(object):
         return [ self.mask[i][mask_[i]] for i,mask_ in enumerate(mask) ]
 
 
-class NoCalib(Calibrator)
+class NoCalib(Calibrator):
     """
     A class to manage calculating and returning calibration factors and weights for a general catalog without shear corrections.
     """
@@ -457,7 +457,7 @@ class NoCalib(Calibrator)
         return 0.
 
 
-class MetaCalib(Calibrator)
+class MetaCalib(Calibrator):
     """
     A class to manage calculating and returning calibration factors and weights for a metacal catalog.
     """
@@ -501,7 +501,7 @@ class MetaCalib(Calibrator)
         return Rs
 
 
-class ClassicCalib(Calibrator)
+class ClassicCalib(Calibrator):
     """
     A class to manage calculating and returning calibration factors and weights for a metacal catalog.
     """
