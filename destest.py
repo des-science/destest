@@ -194,6 +194,7 @@ class Testsuite(object):
         """
 
         fpath = self.file_path(self,'',self.param_file,ftype='yaml')
+        print 'saving input yaml to: '+fpath
         with open(fpath, 'w') as outfile:
             yaml.dump(self.params, outfile, default_flow_style=False)
 
