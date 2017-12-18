@@ -276,7 +276,7 @@ class H5Source(SourceParser):
                     continue
                 if col not in self.sheared_cols:
                     continue
-                if col not in hdf[t].dtype.fields.keys()
+                if col not in hdf[t].dtype.fields.keys():
                     raise NameError('Col '+col+' not found in sheared table '+t+' of hdf5 file.')
 
             if rows is not None:
