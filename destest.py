@@ -164,7 +164,7 @@ class Testsuite(object):
 
         # Run tests
         if 'split_mean' in self.params:
-            LinearSplit(self.params,self,self.calibrator)
+            LinearSplit(self.params,self,self.calibrator,self.source)
 
     def file_path( self, subdir, name, var=None, var2=None, ftype='txt' ):
         """
@@ -734,7 +734,7 @@ class LinearSplit(object):
     Instantiate with a testsuite object and opetionally a function to operate on the bins (not fully implemented).
     """
 
-    def __init__( self, params, testsuite, calibrator, func=np.mean, **kwargs ):
+    def __init__( self, params, testsuite, calibrator, source, func=np.mean, **kwargs ):
 
         self.params = params
         if self.params['split_mean'] is not None:
@@ -746,6 +746,7 @@ class LinearSplit(object):
 
         self.testsuite  = testsuite
         self.calibrator = calibrator
+        self.source     = source
         self.splitter   = splitter(testsuite)
         self.split_y    = self.params['split_mean']
         self.step       = 0
