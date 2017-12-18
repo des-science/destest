@@ -377,8 +377,11 @@ class Selector(object):
 
             # For each of 'select_cols' in yaml file, read in the data and iteratively apply the appropriate mask
             for i,select_col in enumerate(self.params['select_cols']):
+                print i, select_col
                 cols = self.source.read(col=select_col)
                 for j,col in enumerate(cols):
+                    print j, col
+                    print eval(self.params['select_exp'][i]),np.sum(eval(self.params['select_exp'][i]))
                     self.mask[j] = self.mask[j] & eval(self.params['select_exp'][i])
 
             # Loop over unsheared and sheared mask arrays and build limiting mask
