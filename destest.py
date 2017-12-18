@@ -3,6 +3,7 @@ import fitsio as fio
 import h5py
 import cPickle as pickle
 import os
+import sys
 # and maybe a bit optimistic...
 from multiprocessing import Pool
 #from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
