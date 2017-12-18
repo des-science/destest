@@ -177,7 +177,10 @@ class Testsuite(object):
             name += '_' + var2
         name += '.' + ftype
 
-        print self.params['output'],self.param_file[:self.param_file.index('.')],subdir
+        print self.params['output']
+        print self.param_file
+        print self.param_file[:self.param_file.index('.')]
+        print subdir
         fpath = os.path.join(self.params['output'],self.param_file[:self.param_file.index('.')],subdir)
 
         if os.path.exists(fpath):
@@ -194,7 +197,7 @@ class Testsuite(object):
         Arxiv input yaml settings.
         """
 
-        fpath = self.file_path(self,'',self.param_file,ftype='yaml')
+        fpath = self.file_path('',self.param_file,ftype='yaml')
         print 'saving input yaml to: '+fpath
         with open(fpath, 'w') as outfile:
             yaml.dump(self.params, outfile, default_flow_style=False)
