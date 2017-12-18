@@ -418,6 +418,7 @@ class Selector(object):
             if np.isscalar(x):
                 return x
             else:
+                print x,self.mask[0],mask[0]
                 return x[self.mask[0][mask[0]]]
 
         if len(x) == 1:
