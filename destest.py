@@ -693,7 +693,7 @@ class Splitter(object):
             self.order = []
             for i,x_ in enumerate(self.x):
                 self.order.append( np.argsort(x_) )
-                self.x[i] = x_[self.order]
+                self.x[i] = x_[self.order[i]]
             # save cache of sorted x and its order relative to the source
             save_obj( [self.order,self.x], sort_file )
 
