@@ -370,10 +370,9 @@ class Selector(object):
         if not hasattr(self,'mask'):
             # mask cache doesn't exist, or you chose to ignore it, so masks are built from yaml selection conditions
             # set up 'empty' mask
+            self.mask = [np.ones(self.source.size, dtype=bool)]
             if self.params['cal_type']=='mcal':
-                self.mask = np.repeat(np.ones(self.source.size, dtype=bool),5)
-            else:
-                self.mask = [np.ones(self.source.size, dtype=bool)]
+                self.mask = self.mask * 5
 
             # For each of 'select_cols' in yaml file, read in the data and iteratively apply the appropriate mask
             for i,select_col in enumerate(self.params['select_cols']):
