@@ -364,7 +364,7 @@ class Selector(object):
         if self.params['load_cache']:
             # if mask cache exists, read mask from pickle and skip parsing yaml selection conditions.
 
-            if os.exists(mask_file):
+            if os.path.exists(mask_file):
                 self.mask, self.mask_ = load_obj(mask_file)
 
         if not hasattr(self,'mask'):
@@ -683,7 +683,7 @@ class Splitter(object):
         sort_file = self.testsuite.file_path('cache','sort',var=col,ftype='pickle')
         if self.params['load_cache']:
 
-            if os.exists(sort_file):
+            if os.path.exists(sort_file):
                 self.order,self.x = load_obj(sort_file)
 
         # Cache file doesn't exist or you're remaking it
