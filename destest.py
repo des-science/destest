@@ -672,27 +672,27 @@ class Splitter(object):
         Reads in a column (x) and sorts it. If you allowed cache reading, it will check if you've already done this and just read it in from the pickle cach. Then finds the edges of the bins you've requested.
         """
 
-            # Check if cache file exists and use it if you've requested that.
-            sort_file = self.file_path('cache','sort',var=col,ftype='pickle')
-            if self.params['load_cache']:
+        # Check if cache file exists and use it if you've requested that.
+        sort_file = self.file_path('cache','sort',var=col,ftype='pickle')
+        if self.params['load_cache']:
 
-                if os.exists(sort_file):
-                    self.order,self.x = load_obj(sort_file)
+            if os.exists(sort_file):
+                self.order,self.x = load_obj(sort_file)
 
-            # Cache file doesn't exist or you're remaking it
-            if not hasattr(self,'order'):
-                # Read x
-                self.x     = self.selector.get_col(col)
-                # save the index order to sort the x array for more efficient binning
-                self.order = []
-                for i,x_ in enumerate(self.x):
-                    self.order.append( np.argsort(x_) )
-                    self.x[i] = x_[self.order]
-                # save cache of sorted x and its order relative to the source
-                save_obj(sort_file,[self.order,self.x])
+        # Cache file doesn't exist or you're remaking it
+        if not hasattr(self,'order'):
+            # Read x
+            self.x     = self.selector.get_col(col)
+            # save the index order to sort the x array for more efficient binning
+            self.order = []
+            for i,x_ in enumerate(self.x):
+                self.order.append( np.argsort(x_) )
+                self.x[i] = x_[self.order]
+            # save cache of sorted x and its order relative to the source
+            save_obj(sort_file,[self.order,self.x])
 
-            # get bin edges
-            self.get_edge_idx()
+        # get bin edges
+        self.get_edge_idx()
 
         return
 
