@@ -4,7 +4,7 @@
 # number of bins for linear (non-2pt) splitting
 linear_bins : 20
 # columns over which to iterate linear splitting
-split_x : ['snr','psf1','psf2',]
+split_x : ['snr','psf1','psf2','size']
 # reuse cached intermediate results? This will make subsequent runs much faster.
 load_cache  : True 
 # output directory
@@ -13,30 +13,30 @@ output      : .
 output_exists : True 
 
 # Tests to run
-split_mean : None
+split_mean : ['e1','e2','flux_r']
 
 # Data source
 # Type of data source. Currently only works for 'hdf5'
 source     : 'hdf5'
 # name of file
-filename   : 'y3v02-mcal-001-0-combined-blind-v1'
+filename   : '/global/cscratch1/sd/troxel/cats_des_y3/y3v02-mcal-001-combined-blind-v1.h5'
 # For hdf5, group name
 group      : 'catalog'
 # if metacalibrating, include array of five tables: unsehared, 1p, 1m, 2p, 2m
-# else if classic calibration, include table name ('scalar' string)
+# else if classic calibration, include table name (still as a list of length one)
 table      : ['unsheared', 'sheared_1p', 'sheared_1m', 'sheared_2p', 'sheared_2m']
 # shearing factor for metacal
 dg         : 0.1
 
 # Selection 
 # columns with which to mask the catalog
-select_cols : ['snr','snr','rgp','flags']
+select_cols : ['snr','snr','size_ratio','flags']
 # expressions by which to mask (must match 1-1 the list of select_cols)
-select_exp   : ['col==0','10<col','col<100','col>0.5']
+select_exp   : ['10<col','col<100','col>0.5','col==0']
 
 # Catalog dicts
 # len 2 array with column names for ellipticity
-e           : ['e1','e2']
+e           : ['e1','e2'] # Must exist at least as an empty list
 # len 2 array with column names for shear response (or m)
 Rg          : ['R11','R22']
 # len 2 array with column names for c (additive correction)

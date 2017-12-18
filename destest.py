@@ -1,4 +1,3 @@
-import tables as tb
 import numpy as np
 import fitsio as fio
 import h5py
@@ -24,48 +23,94 @@ def load_obj( name ):
         return pickle.load(f)
 
 
-def convert_mcal_to_h5( catdir='/global/project/projectdirs/des/wl/desdata/users/esheldon/matched-catalogs/', file_ext='fits', outfile='./out.h5' ):
+def convert_mcal_to_h5( catdir='/global/project/projectdirs/des/wl/desdata/users/esheldon/matched-catalogs/', file_ext='fits', outfile='./y3v02-mcal-001-combined-blind-v1.h5' ):
     """
-    Converts list of metacal fits files into a single h5 file with separate tables for each of the unsheared and four sheared values.
+    Converts metacal fits files into a single h5 file with separate tables for each of the unsheared and four sheared values.
     """
     import glob
+    from numpy.lib.recfunctions import append_fields
 
     def append_sheared_table( f, cat, i, sheared, iter_end ):
-
         cols = [name for name in cat.dtype.names if (name[-3:] == '_'+sheared)]
         tmp  = cat[cols]
         tmp.dtype.names = [name[:-3] for name in tmp.dtype.names]
+        tmp = append_fields(tmp,'size_ratio',data=tmp['size']/cat['psf_size'])
         if i==0:
             f.create_dataset('catalog/sheared_'+sheared, maxshape=(None), shape=(total_length,), dtype=tmp.dtype)
         f['catalog/sheared_'+sheared][iter_end:iter_end+len(cat)] = tmp
 
     total_length = 0
     for i,name in enumerate(glob.glob(catdir+'*')):
-        if name[-len(file_ext):] != file_ext:
+        if file_ext not in name:
             continue
-        total_length += fio.FITS(catdir+name)[1].read_header()['NAXIS2']
+        total_length += fio.FITS(name)[1].read_header()['NAXIS2']
 
     f = h5py.File(outfile, 'w')
-
     iter_end = 0
     for i,name in enumerate(glob.glob(catdir+'*')):
-        if name[-len(file_ext):] != file_ext:
+        if file_ext not in name:
             continue
         print name
-
-        cat=fio.FITS(catdir+name+'.fits')[1].read()
-
-        cols = [name for name in cat.dtype.names if ((not name[-3:] == '_1p') and (not name[-3:] == '_1m') and (not name[-3:] == '_2p') and (not name[-3:] == '_2m'))]
+        cat=fio.FITS(name)[1].read()
+        cols = [name for name in cat.dtype.names if (not name[-3:] in ['1p','1m','2p','2m'])]
+        tmp = cat[cols]
+        tmp = append_fields(tmp,'size_ratio',data=tmp['size']/tmp['psf_size'])
         if i==0:
-            f.create_dataset('catalog/unsheared', maxshape=(None), shape=(total_length,), dtype=cat[cols].dtype)
-        f['catalog/unsheared'][iter_end:iter_end+len(cat)] = cat[cols]
-
+            f.create_dataset('catalog/unsheared', maxshape=(None), shape=(total_length,), dtype=tmp.dtype)
+        f['catalog/unsheared'][iter_end:iter_end+len(tmp)] = tmp
         for sheared in ['1p','1m','2p','2m']:
             append_sheared_table(f,cat,i,sheared,iter_end)
-
         iter_end += len(cat)
 
-    h5file.close()
+    f.close()
+
+
+def convert_mcal_to_h5_v2( catdir='/global/project/projectdirs/des/wl/desdata/users/esheldon/matched-catalogs/', file_ext='fits', outfile='./y3v02-mcal-001-combined-blind-v1.h5' ):
+    """
+    Converts metacal fits files into a single h5 file with separate tables for each of the unsheared and four sheared values.
+    This form is much faster to access, but doesn't preserve the complete recarray table structure.
+    """
+    import glob
+    from numpy.lib.recfunctions import append_fields
+
+    def append_sheared_table( f, cat, i, sheared, iter_end, total_length ):
+        cols = [name for name in cat.dtype.names if (name[-2:] == sheared)]
+        for name in cols:
+            if i==0:
+                f.create_dataset('catalog/sheared_'+sheared+'/'+name[:-3], maxshape=(total_length,), shape=(total_length,), dtype=cat.dtype[name], chunks=(1000000,))
+            f['catalog/sheared_'+sheared+'/'+name[:-3]][iter_end:iter_end+len(cat)] = cat[name]
+        if i==0:
+            f.create_dataset('catalog/sheared_'+sheared+'/size_ratio', maxshape=(total_length,), shape=(total_length,), dtype=cat.dtype['size'], chunks=(1000000,))
+        f['catalog/sheared_'+sheared+'/size_ratio'][iter_end:iter_end+len(cat)] = cat['size_'+sheared]/cat['psf_size']
+
+    total_length = 0
+    for i,name in enumerate(glob.glob(catdir+'*')):
+        if file_ext not in name:
+            continue
+        total_length += fio.FITS(name)[1].read_header()['NAXIS2']
+
+    f = h5py.File(outfile, 'w')
+    iter_end = 0
+    for i,fname in enumerate(glob.glob(catdir+'*')):
+        if file_ext not in fname:
+            continue
+        print fname
+        cat=fio.FITS(fname)[1].read()
+        cols = [name for name in cat.dtype.names if (not name[-2:] in ['1p','1m','2p','2m'])]
+        if i!=0:
+            for name in cols:
+                if i==0:
+                    f.create_dataset('catalog/unsheared/'+name, maxshape=(total_length,), shape=(total_length,), dtype=cat.dtype[name], chunks=(1000000,))
+                f['catalog/unsheared/'+name][iter_end:iter_end+len(cat)] = cat[name]
+            if i==0:
+                f.create_dataset('catalog/unsheared/size_ratio', maxshape=(total_length,), shape=(total_length,), dtype=cat.dtype['size'], chunks=(1000000,))
+            f['catalog/unsheared/size_ratio'][iter_end:iter_end+len(cat)] = cat['size']/cat['psf_size']
+            for sheared in ['1p','1m','2p','2m']:
+                append_sheared_table(f,cat,i,sheared,iter_end,total_length)
+        iter_end += len(cat)
+
+    f.close()
+
 
 
 class Testsuite(object):
@@ -178,7 +223,7 @@ class H5Source(SourceParser):
 
         if 'group' in self.params.keys():
 
-            self.hdf = h5py.File(self.params['filename']+'.h5', mode = 'r+')[self.params['group']]
+            self.hdf = h5py.File(self.params['filename'], mode = 'r+')[self.params['group']]
             # save length of tables
             self.size = self.hdf[self.params['table'][0]].shape[0]
             # save all column names
