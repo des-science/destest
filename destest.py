@@ -257,9 +257,9 @@ class H5Source(SourceParser):
 
             self.hdf = h5py.File(self.params['filename'], mode = 'r+')
             # save length of tables
-            self.size = self.hdf[self.params['group']][self.params['table'][0]].shape[0]
+            self.size = self.hdf[self.params['group']][self.params['table'][0]][self.params['index']].shape[0]
             # save all column names
-            self.cols = self.hdf[self.params['group']][self.params['table'][0]].dtype.fields.keys()
+            self.cols = self.hdf[self.params['group']][self.params['table'][0]].keys()
 
             # Loop over tables and save convenience information
             for t in self.params['table']:
