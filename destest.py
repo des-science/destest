@@ -164,7 +164,7 @@ class Testsuite(object):
 
         # Run tests
         if 'split_mean' in self.params:
-            LinearSplit(self.params,self,self.calibtrator)
+            LinearSplit(self.params,self,self.calibrator)
 
     def file_path( self, subdir, name, var=None, var2=None, ftype='txt' ):
         """
