@@ -376,25 +376,22 @@ class Selector(object):
 
             # For each of 'select_cols' in yaml file, read in the data and iteratively apply the appropriate mask
             for i,select_col in enumerate(self.params['select_cols']):
-                print i, select_col
                 cols = self.source.read(col=select_col)
                 for j,col in enumerate(cols):
-                    print j, col
-                    print eval(self.params['select_exp'][i]),np.sum(eval(self.params['select_exp'][i]))
                     self.mask[j] = self.mask[j] & eval(self.params['select_exp'][i])
 
             # Loop over unsheared and sheared mask arrays and build limiting mask
             self.mask_ = np.zeros(self.source.size, dtype=bool)
             for mask_ in self.mask:
                 self.mask_ = self.mask_ | mask_
-            # Convert to index arrays
-            self.mask_ = np.where(self.mask_)[0]
 
             # Cut down masks to the limiting mask and convert to index arrays
             # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
             for i in range(len(self.mask)):
+                print self.mask[i],self.mask_
                 self.mask[i] = self.mask[self.mask_]
                 self.mask[i] = np.where(self.mask[i])[0]
+            self.mask_ = np.where(self.mask_)[0]
 
             # save cache of masks to speed up reruns
             save_obj( mask_file, [self.mask, self.mask_])
