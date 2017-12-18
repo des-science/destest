@@ -5,7 +5,7 @@ import cPickle as pickle
 import os
 # and maybe a bit optimistic...
 from multiprocessing import Pool
-from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
+#from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
 
 if sys.version_info[0] == 3:
     string_types = str,
