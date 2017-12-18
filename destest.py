@@ -747,7 +747,7 @@ class LinearSplit(object):
 
         self.testsuite  = testsuite
         self.calibrator = calibrator
-        self.splitter   = splitter(testsuite)
+        self.splitter   = Splitter(testsuite)
         self.split_y    = self.params['split_mean']
         self.step       = 0
 
