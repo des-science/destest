@@ -4,7 +4,7 @@
 # number of bins for linear (non-2pt) splitting
 linear_bins : 20
 # columns over which to iterate linear splitting
-split_x : ['snr','psf1','psf2','size']
+split_x : ['snr','psf_e1','psf_e2','size']
 # reuse cached intermediate results? This will make subsequent runs much faster.
 load_cache  : True 
 # output directory
