@@ -177,6 +177,7 @@ class Testsuite(object):
             name += '_' + var2
         name += '.' + ftype
 
+        print self.params['output'],self.param_file[:self.param_file.index('.')],subdir
         fpath = os.path.join(self.params['output'],self.param_file[:self.param_file.index('.')],subdir)
 
         if os.path.exists(fpath):
