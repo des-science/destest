@@ -736,6 +736,7 @@ class LinearSplit(object):
 
     def __init__( self, params, testsuite, calibrator, func=np.mean, **kwargs ):
 
+        self.params = params
         if self.params['split_mean'] is not None:
             for col in self.params['split_mean']:
                 if col not in self.source.cols:
@@ -743,10 +744,11 @@ class LinearSplit(object):
         else:
             self.params['split_mean'] = self.source.cols
 
-        self.testsuite = testsuite
-        self.splitter  = splitter(testsuite)
-        self.split_y   = self.params['split_mean']
-        self.step      = 0
+        self.testsuite  = testsuite
+        self.calibrator = calibrator
+        self.splitter   = splitter(testsuite)
+        self.split_y    = self.params['split_mean']
+        self.step       = 0
 
         # 'step' and this separate call is meant as a placeholder for potential parallelisation
         self.iter_mean()
