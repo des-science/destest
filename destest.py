@@ -164,7 +164,7 @@ class Testsuite(object):
 
         # Run tests
         if 'split_mean' in self.params:
-            LinearSplit(self.params,self,self.selector,self.calibrator,self.source)
+            LinearSplit(self.params,self,self.selector,self.calibrator,self.source,self.params['split_x'],self.params['split_mean'])
 
     def file_path( self, subdir, name, var=None, var2=None, ftype='txt' ):
         """
@@ -471,7 +471,7 @@ class Calibrator(object):
         """
 
         # Get the weights
-        w = self.get_w(self,mask,return_full_w=return_full_w)
+        w = self.get_w(mask,return_full_w=return_full_w)
         if return_full_w:
             w_ = w[0]
         else:
@@ -598,7 +598,7 @@ class Splitter(object):
     Initiate with a testsuite object.
     """
 
-    def __init__( self, params, testsuite, selector, calibrator, source ):
+    def __init__( self, params, testsuite, selector, calibrator, source, nbins = None ):
 
         self.params     = params
         self.selector   = selector
@@ -614,10 +614,15 @@ class Splitter(object):
         else:
             self.params['split_x'] = self.source.cols
 
-        if hasattr(self.edges,"__len__"):
-            self.bins = len(self.edges)-1
+        if nbins is not None:
+            self.bins = nbins
+
         else:
-            self.bins = self.edges
+
+            if hasattr(self.edges,"__len__"):
+                self.bins = len(self.edges)-1
+            else:
+                self.bins = self.edges
 
         return
 
@@ -737,7 +742,7 @@ class LinearSplit(object):
     Instantiate with a testsuite object and opetionally a function to operate on the bins (not fully implemented).
     """
 
-    def __init__( self, params, testsuite, selector, calibrator, source, func=np.mean, **kwargs ):
+    def __init__( self, params, testsuite, selector, calibrator, source, split_x, split_y, nbins = None, func=np.mean, **kwargs ):
 
         self.params = params
         self.source = source
@@ -750,8 +755,9 @@ class LinearSplit(object):
 
         self.testsuite  = testsuite
         self.calibrator = calibrator
-        self.splitter   = Splitter(params,testsuite,selector,calibrator,source)
-        self.split_y    = self.params['split_mean']
+        self.splitter   = Splitter(params,testsuite,selector,calibrator,source,nbins)
+        self.split_x    = split_x
+        self.split_y    = split_y
         self.step       = 0
 
         # 'step' and this separate call is meant as a placeholder for potential parallelisation
@@ -762,11 +768,11 @@ class LinearSplit(object):
         Loop over x columns (quantities binned by) and y columns (quantities to perform operations on in bins of x), perform the operations, and save the results
         """
 
-        for x in self.params['split_x']:
+        for x in self.split_x:
             xmean = []
             ymean = []
             ystd  = []
-            for y in self.params['split_mean']:
+            for y in self.split_y:
                 for xbin in range(self.splitter.bins):
                     # get x array in bin xbin
                     xval       = self.splitter.get_x(x,xbin)

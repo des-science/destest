@@ -4,7 +4,6 @@
 # number of bins for linear (non-2pt) splitting
 linear_bins : 20
 # columns over which to iterate linear splitting
-split_x : ['snr','psf_e1','psf_e2','size']
 # reuse cached intermediate results? This will make subsequent runs much faster.
 load_cache  : True 
 # output directory
@@ -13,7 +12,13 @@ output      : .
 output_exists : True 
 
 # Tests to run
-split_mean : ['e1','e2','flux_r']
+# Calculate general statistics for all columns
+general_stats : 
+# Do linear mean value splits by 'x' column list
+split_mean    : ['e1','e2','flux_r']
+split_x       : ['snr','psf_e1','psf_e2','size']
+
+
 
 # Data source
 # calibration type
