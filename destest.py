@@ -4,6 +4,7 @@ import h5py
 import cPickle as pickle
 import os
 import sys
+import yaml
 # and maybe a bit optimistic...
 from multiprocessing import Pool
 #from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
