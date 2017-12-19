@@ -402,7 +402,7 @@ class Selector(object):
 
         # x at this point is the full column
         x = self.source.read(col=col, nosheared=nosheared)
-        print 'get_col',x
+        print 'get_col',len(x),x
 
         # trim to mask_ and return
         return [ x[i][self.mask_] for i in range(len(x)) ]
@@ -654,7 +654,6 @@ class Splitter(object):
         if not hasattr(self,'xcol'):
             raise NameError('There is no x column associated with this splitter.')
 
-
         # If column doesn't already exist in splitter, read the data and order it to match x ordering for efficient splitting.
         if (not hasattr(self,'ycol')) or (col != self.ycol):
             self.ycol = col
@@ -669,8 +668,8 @@ class Splitter(object):
             return
 
         # If asking for a bin selection, find the appropriate mask and return that part of the y array.
-        start,end = self.get_bin_edges(xbin)
-        mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))]
+        start,end = self.get_bin_edges(xbin,nosheared=True)
+        mask      = np.s_[start:end]
         if return_mask:
             return self.selector.get_masked(self.y,mask),mask
         return self.selector.get_masked(self.y,mask)
@@ -725,10 +724,13 @@ class Splitter(object):
 
         return
 
-    def get_bin_edges( self, xbin ):
+    def get_bin_edges( self, xbin, nosheared=False ):
         """
         Helper function to return the lower and upper bin edges.
         """
+
+        if nosheared:
+            return [self.edges[0][xbin]],[self.edges[0][xbin+1]]
 
         return [edge[xbin] for edge in self.edges],[edge[xbin+1] for edge in self.edges]
 
@@ -774,7 +776,7 @@ class LinearSplit(object):
                     # get x array in bin xbin
                     xval       = self.splitter.get_x(x,xbin)
                     # get mean values of x in this bin
-                    xmean.append( self.mean(x,xval,return_std=False) )
+                    xmean.append( self.mean(x,xval[0],return_std=False) )
                     # get y array in bin xbin
                     yval,mask  = self.splitter.get_y(y,xbin,return_mask=True)
                     print 'split',len(yval),yval
