@@ -802,11 +802,11 @@ class LinearSplit(object):
         if R is not None:
             Rw = np.sum(w*R)
             x  = np.copy(x)-c
-            if std:
+            if return_std:
                 Rw2 = np.sum(w*R**2)
             else:
                 Rw = np.sum(w)
-                if std:
+                if return_std:
                     Rw2 = Rw
         else:
             Rw = Rw2 = 1.
