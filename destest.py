@@ -448,7 +448,7 @@ class Calibrator(object):
         self.params = params
         self.selector = selector
 
-    def get_w(self,mask,return_full_w=False):
+    def get_w(self,mask):
         """
         Get the weights and the sum of the weights.
         """
@@ -456,11 +456,7 @@ class Calibrator(object):
         # cut weight to selection and calculate the sum for averages.
         w = self.selector.get_masked(self.w,mask)
         ws = [np.sum(w_) for w_ in w]
-
-        if return_full_w:
-            return w,ws
-        else:
-            return w[0],ws
+        return w,ws
 
     def calibrate(self,col,val,mask=[np.s_[:]]*5,return_full_w=False,weight_only=False):
         """
@@ -468,13 +464,13 @@ class Calibrator(object):
         """
 
         # Get the weights
-        w,ws = self.get_w(mask,return_full_w=return_full_w)
+        w,ws = self.get_w(mask)
         if return_full_w:
             w_ = w[0]
         else:
             w_ = w
         if weight_only:
-            return w
+            return w_
 
         # Get a selection response
         Rs = self.select_resp(col,val,mask,w,ws)
@@ -485,15 +481,15 @@ class Calibrator(object):
             R = np.sum(Rg1*w_)/ws
             R += Rs
             c = self.selector.get_masked(self.c1,mask)
-            return R,c,w
+            return R,c,w_
         elif col == self.params['e'][1]:
             Rg2 = self.selector.get_masked(self.Rg2,mask)
             R = np.sum(Rg2*w_)/ws
             R += Rs
             c = self.selector.get_masked(self.c2,mask)
-            return R,c,w
+            return R,c,w_
         else:
-            return None,None,w
+            return None,None,w_
 
     def select_resp(self,col,e,mask,w,ws):
         """
