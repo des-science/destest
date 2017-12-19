@@ -434,7 +434,7 @@ class Selector(object):
         """
 
         if type(mask) is not list:
-            return [ self.mask[i][mask] ]
+            return [ self.mask[mask] ]
 
         return [ self.mask[i][mask_[i]] for i,mask_ in enumerate(mask) ]
 
