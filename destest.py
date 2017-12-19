@@ -542,6 +542,8 @@ class MetaCalib(Calibrator):
         Get the selection response.
         """
 
+        print col,e,mask,w,ws
+
         # if an ellipticity column, calculate and return the selection response and weight
         if col == self.params['e'][0]:
             mask_ = self.selector.get_mask(mask)
