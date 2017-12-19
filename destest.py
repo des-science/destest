@@ -480,7 +480,7 @@ class Calibrator(object):
             return w
 
         # Get a selection response
-        Rs = self.select_resp(col,val,mask,return_full_w=return_full_w)
+        Rs = self.select_resp(col,val,mask,w,ws)
 
         # Check if an ellipticity - if so, return real calibration factors
         if col == self.params['e'][0]:
@@ -498,6 +498,12 @@ class Calibrator(object):
         else:
             return None,None,w
 
+    def select_resp(self,col,e,mask,w,ws):
+        """
+        Return a zero selection response (default).
+        """
+        return 0.
+
 
 class NoCalib(Calibrator):
     """
@@ -513,12 +519,6 @@ class NoCalib(Calibrator):
         self.w = [1]
         if 'w' in self.params:
             self.w = self.selector.get_col(self.params['w'])
-
-    def select_resp(self,col,e,mask,w,ws):
-        """
-        Return a zero selection response.
-        """
-        return 0.
 
 
 class MetaCalib(Calibrator):
@@ -584,12 +584,6 @@ class ClassicCalib(Calibrator):
         self.w  = [1]
         if 'w' in self.params:
             self.w = self.selector.get_col(self.params['w'])
-
-    def select_resp(self,col,e,mask,w,ws):
-        """
-        Return a zero selection response.
-        """
-        return 0.
 
 
 class Splitter(object):
