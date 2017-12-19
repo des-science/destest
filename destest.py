@@ -719,10 +719,6 @@ class Splitter(object):
         """
         Helper function to return the lower and upper bin edges.
         """
-
-        if nosheared:
-            return self.edges[0][xbin],self.edges[0][xbin+1]
-
         return [edge[xbin] for edge in self.edges],[edge[xbin+1] for edge in self.edges]
 
 
