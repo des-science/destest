@@ -767,13 +767,13 @@ class LinearSplit(object):
                     yval,mask  = self.splitter.get_y(y,xbin,return_mask=True)
                     # get mean and std (for error) in this bin
                     ymean_,ystd_ = self.mean(y,yval,mask=mask)
-                    print 'mean',xbin,xmean[xbin],ymean_,ystd_
                     ymean.append( ymean_ )
-                    ystd.append(  ystd_/np.sqrt(len(mask))  )
+                    ystd.append( ystd_/np.sqrt(len(mask)) )
 
-            # Save results
-            table = np.array([xmean,ymean,ystd]).T
-            self.testsuite.write_table(table,'test_output','linear_split',var=x,var2=y)
+                # Save results
+                table = np.array([xmean,ymean,ystd]).T
+                print 'mean',table
+                self.testsuite.write_table(table,'test_output','linear_split',var=x,var2=y)
 
     def mean( self, col, x, mask=None, return_std=True, return_rms=False ):
         """
@@ -833,5 +833,5 @@ if __name__ == "__main__":
 
     pr.disable()
     ps = pstats.Stats(pr).sort_stats('time')
-    ps.print_stats(100)
+    ps.print_stats(20)
 
