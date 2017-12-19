@@ -599,6 +599,7 @@ class Splitter(object):
         self.y          = None
         self.xcol       = None
         self.ycol       = None
+        self.order      = None
 
         if 'split_x' in self.params:
             for col in self.params['split_x']:
@@ -621,9 +622,9 @@ class Splitter(object):
 
         # If column doesn't already exist in splitter, read the data and define bins in self.split().
         if col != self.xcol:
-            self.xcol = col
+            self.xcol  = col
+            self.order = None
             self.split(col)
-            print 'resplitting',col
 
         # If not asking for a bin selection, return
         if xbin is None:
@@ -680,7 +681,8 @@ class Splitter(object):
                 self.order,self.x = load_obj(sort_file)
 
         # Cache file doesn't exist or you're remaking it
-        if not hasattr(self,'order'):
+        if self.order is None:
+            print 'split sort cache not found'
             # Read x
             self.x     = self.selector.get_col(col)
             # save the index order to sort the x array for more efficient binning
