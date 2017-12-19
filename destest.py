@@ -623,6 +623,7 @@ class Splitter(object):
         if col != self.xcol:
             self.xcol = col
             self.split(col)
+            print 'resplitting',col
 
         # If not asking for a bin selection, return
         if xbin is None:
@@ -630,7 +631,7 @@ class Splitter(object):
 
         # If asking for a bin selection, find the appropriate mask and return that part of the x array.
         start,end = self.get_bin_edges(xbin)
-        print 'returning x bin',start,end
+        # print 'returning x bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))] # np.s_ creates an array slice 'object' that can be passed to functions
         if return_mask:
             return self.selector.get_masked(self.x,mask),mask
@@ -659,7 +660,7 @@ class Splitter(object):
 
         # If asking for a bin selection, find the appropriate mask and return that part of the y array.
         start,end = self.get_bin_edges(xbin)
-        print 'returning y bin',start,end
+        # print 'returning y bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))]
         if return_mask:
             return self.selector.get_masked(self.y,mask),mask
@@ -673,6 +674,7 @@ class Splitter(object):
         # Check if cache file exists and use it if you've requested that.
         sort_file = self.testsuite.file_path('cache','sort',var=col,ftype='pickle')
         if self.params['load_cache']:
+            print 'loading split sort cache'
 
             if os.path.exists(sort_file):
                 self.order,self.x = load_obj(sort_file)
