@@ -547,6 +547,7 @@ class MetaCalib(Calibrator):
         # if an ellipticity column, calculate and return the selection response and weight
         if col == self.params['e'][0]:
             mask_ = self.selector.get_mask(mask)
+            print mask_
             Rs = np.sum(e[0][mask_[1]]*w[1])/ws[1]-np.sum(e[0][mask_[2]]*w[2])/ws[2]
         elif col == self.params['e'][1]:
             mask_ = self.selector.get_mask(mask)
@@ -714,7 +715,7 @@ class Splitter(object):
 
         return
 
-    def get_bin_edges( self, xbin, nosheared=False ):
+    def get_bin_edges( self, xbin ):
         """
         Helper function to return the lower and upper bin edges.
         """
@@ -771,6 +772,7 @@ class LinearSplit(object):
                     xmean.append( self.mean(x,xval[0],return_std=False) )
                     # get y array in bin xbin
                     yval,mask  = self.splitter.get_y(y,xbin,return_mask=True)
+                    print 'iter_mean_mask',mask
                     # get mean and std (for error) in this bin
                     ymean_,ystd_ = self.mean(y,yval,mask=mask)
                     ymean.append( ymean_ )
