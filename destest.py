@@ -657,7 +657,7 @@ class Splitter(object):
         # If column doesn't already exist in splitter, read the data and order it to match x ordering for efficient splitting.
         if (not hasattr(self,'ycol')) or (col != self.ycol):
             self.ycol = col
-            self.y = self.selector.get_col(col)
+            self.y = self.selector.get_col(col,nosheared=True)
             for i,y_ in enumerate(self.y):
                 self.y[i] = y_[self.order[i]]
 
