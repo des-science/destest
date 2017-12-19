@@ -420,13 +420,11 @@ class Selector(object):
             else:
                 return x[self.mask[0][mask[0]]]
 
-        print x, x[0],mask,mask[0]
+        if np.isscalar(x[0]):
+            return x
 
         if len(x) == 1:
-            if np.isscalar(x[0]):
-                return x
-            else:
-                return [ x[0][self.mask[0][mask[0]]] ]
+            return [ x[0][self.mask[0][mask[0]]] ]
 
         return [ x_[self.mask[i][mask[i]]] for i,x_ in enumerate(x) ]
 
