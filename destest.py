@@ -6,6 +6,7 @@ import os
 import sys
 import yaml
 import cProfile, pstats
+import time
 # and maybe a bit optimistic...
 from multiprocessing import Pool
 #from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
@@ -543,7 +544,6 @@ class MetaCalib(Calibrator):
 
         # if an ellipticity column, calculate and return the selection response and weight
         if col == self.params['e'][0]:
-            print len(e),e,mask,w,ws
             mask_ = self.selector.get_mask(mask)
             Rs = np.sum(e[0][mask_[1]]*w[1])/ws[1]-np.sum(e[0][mask_[2]]*w[2])/ws[2]
         elif col == self.params['e'][1]:
@@ -701,8 +701,8 @@ class Splitter(object):
         # You've provided a number of bins. Get the weights and define bin edges such that there exists equal weight in each bin.
         w = self.calibrator.calibrate(self.xcol,self.x,return_full_w=True,weight_only=True)
         for x_,w_ in tuple(zip(self.x,w)):
-            cumsum = (x_*w_).cumsum() / (x_*w_).sum()
-            self.edges.append( np.searchsorted(cumsum, np.linspace(0, 1, self.bins+1, endpoint=True)) )
+            normcumsum = (x_*w_).cumsum() / (x_*w_).sum()
+            self.edges.append( np.searchsorted(normcumsum, np.linspace(0, 1, self.bins+1, endpoint=True)) )
 
         return
 
@@ -757,7 +757,6 @@ class LinearSplit(object):
             for y in self.split_y:
                 print 'y col',y
                 for xbin in range(self.splitter.bins):
-                    print 'bin',xbin
                     # get x array in bin xbin
                     xval       = self.splitter.get_x(x,xbin)
                     # get mean values of x in this bin
@@ -787,16 +786,28 @@ class LinearSplit(object):
 
         # do the calculation
         if R is not None:
-            Rw = np.sum(w*R)
+
             x  = np.copy(x)-c
+            Rw = w*R
             if return_std:
-                Rw2 = np.sum(w*R**2)
+                Rw2 = w*R**2
             else:
-                Rw = np.sum(w)
-                if return_std:
-                    Rw2 = Rw
+                Rw2 = 1.
+
+            if np.isscalar(Rw):
+                Rw  *= len(x)
+                Rw2 *= len(x)
+            else:
+                Rw  = np.sum(Rw)
+                Rw2 = np.sum(Rw2)
+
         else:
-            Rw = Rw2 = 1.
+
+            if np.isscalar(w):
+                Rw  = w*len(x)
+            else:
+                Rw  = np.sum(w)
+            Rw2 = Rw
 
         mean = np.sum(w*x)/Rw
         if not (return_std or return_rms):
@@ -817,6 +828,7 @@ pr = cProfile.Profile()
 if __name__ == "__main__":
     """
     """
+    t0 = time.time()
     pr.enable()
 
     Testsuite( sys.argv[1] )
