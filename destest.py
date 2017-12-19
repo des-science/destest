@@ -423,8 +423,6 @@ class Selector(object):
         if np.isscalar(x[0]):
             return x
 
-        print x,mask,len(x[0])
-        print x[0][mask[0]]
         return [ x_[self.mask[i][mask[i]]] for i,x_ in enumerate(x) ]
 
     def get_mask( self, mask ):
@@ -433,9 +431,9 @@ class Selector(object):
         """
 
         if type(mask) is not list:
-            return [ self.mask[mask] ]
+            return self.mask[mask]
 
-        return [ self.mask[i][mask_[i]] for i,mask_ in enumerate(mask) ]
+        return [ self.mask[i][mask_] for i,mask_ in enumerate(mask) ]
 
 
 class Calibrator(object):
