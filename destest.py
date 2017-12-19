@@ -471,7 +471,7 @@ class Calibrator(object):
         """
 
         # Get the weights
-        w = self.get_w(mask,return_full_w=return_full_w)
+        w,ws = self.get_w(mask,return_full_w=return_full_w)
         print w
         if return_full_w:
             w_ = w[0]
