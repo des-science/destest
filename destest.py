@@ -808,7 +808,7 @@ class LinearSplit(object):
         else:
             Rw = Rw2 = 1.
 
-        print len(w),len(x),len(Rw)
+        print w,x,Rw
         mean = np.sum(w*x)/Rw
         if return_std:
             std=np.sqrt(np.sum(w*(x-mean)**2)/Rw2)
