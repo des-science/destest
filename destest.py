@@ -544,6 +544,8 @@ class MetaCalib(Calibrator):
         Get the selection response.
         """
 
+        print 
+
         # if an ellipticity column, calculate and return the selection response and weight
         if col == self.params['e'][0]:
             mask_ = self.selector.get_mask(mask)
@@ -653,10 +655,7 @@ class Splitter(object):
         # If column doesn't already exist in splitter, read the data and order it to match x ordering for efficient splitting.
         if (not hasattr(self,'ycol')) or (col != self.ycol):
             self.ycol = col
-            if col in self.params['e']:
-                self.y = self.selector.get_col(col)
-            else:
-                self.y = self.selector.get_col(col,nosheared=True)
+            self.y = self.selector.get_col(col,nosheared=True)
             for i,y_ in enumerate(self.y):
                 self.y[i] = y_[self.order[i]]
 
