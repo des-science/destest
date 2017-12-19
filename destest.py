@@ -599,6 +599,8 @@ class Splitter(object):
         self.source     = source
         self.testsuite  = testsuite
         self.edges      = self.params['linear_bins']
+        self.x          = None
+        self.y          = None
 
         if 'split_x' in self.params:
             for col in self.params['split_x']:
@@ -627,7 +629,7 @@ class Splitter(object):
         """
 
         # If column doesn't already exist in splitter, read the data and define bins in self.split().
-        if (not hasattr(self,'xcol')) or (col != self.xcol):
+        if col != self.xcol:
             self.xcol = col
             self.split(col)
 
@@ -653,7 +655,7 @@ class Splitter(object):
             raise NameError('There is no x column associated with this splitter.')
 
         # If column doesn't already exist in splitter, read the data and order it to match x ordering for efficient splitting.
-        if (not hasattr(self,'ycol')) or (col != self.ycol):
+        if col != self.ycol:
             self.ycol = col
             self.y = self.selector.get_col(col,nosheared=True)
             for i,y_ in enumerate(self.y):
