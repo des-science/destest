@@ -402,6 +402,7 @@ class Selector(object):
 
         # x at this point is the full column
         x = self.source.read(col=col, nosheared=nosheared)
+        print 'get_col',x
 
         # trim to mask_ and return
         return [ x[i][self.mask_] for i in range(len(x)) ]
@@ -660,6 +661,8 @@ class Splitter(object):
             self.y = self.selector.get_col(col,nosheared=True)
             for i,y_ in enumerate(self.y):
                 self.y[i] = y_[self.order[i]]
+
+        print self.y
 
         # If not asking for a bin selection, return
         if xbin is None:
