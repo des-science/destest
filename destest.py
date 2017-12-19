@@ -424,9 +424,6 @@ class Selector(object):
         if np.isscalar(x[0]):
             return x
 
-        if len(x) == 1:
-            return [ x[0][self.mask[0][mask[0]]] ]
-
         return [ x_[self.mask[i][mask[i]]] for i,x_ in enumerate(x) ]
 
     def get_mask( self, mask ):
