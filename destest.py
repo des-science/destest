@@ -472,6 +472,7 @@ class Calibrator(object):
 
         # Get the weights
         w = self.get_w(mask,return_full_w=return_full_w)
+        print w
         if return_full_w:
             w_ = w[0]
         else:
@@ -721,7 +722,9 @@ class Splitter(object):
         else:
             # You've provided a number of bins. Get the weights and define bin edges such that there exists equal weight in each bin.
             w = self.calibrator.calibrate(self.xcol,self.x,return_full_w=True,weight_only=True)
+            print w
             for x_,w_ in tuple(zip(self.x,w)):
+                print w_
                 cumsum = (x_*w_).cumsum() / (x_*w_).sum()
                 edges.append( np.searchsorted(cumsum, np.linspace(0, 1, self.edges+1, endpoint=True)) )
             self.edges = edges
