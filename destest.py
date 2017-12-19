@@ -674,7 +674,7 @@ class Splitter(object):
         # Check if cache file exists and use it if you've requested that.
         sort_file = self.testsuite.file_path('cache','sort',var=col,ftype='pickle')
         if self.params['load_cache']:
-            print 'loading split sort cache'
+            print 'loading split sort cache',sort_file
 
             if os.path.exists(sort_file):
                 self.order,self.x = load_obj(sort_file)
