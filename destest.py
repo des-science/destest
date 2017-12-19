@@ -402,7 +402,6 @@ class Selector(object):
 
         # x at this point is the full column
         x = self.source.read(col=col, nosheared=nosheared)
-        print 'get_col',len(x),x
 
         # trim to mask_ and return
         return [ x[i][self.mask_] for i in range(len(x)) ]
@@ -656,19 +655,20 @@ class Splitter(object):
         # If column doesn't already exist in splitter, read the data and order it to match x ordering for efficient splitting.
         if (not hasattr(self,'ycol')) or (col != self.ycol):
             self.ycol = col
-            self.y = self.selector.get_col(col,nosheared=True)
+            if col in self.params['e']:
+                self.y = self.selector.get_col(col)
+            else:
+                self.y = self.selector.get_col(col,nosheared=True)
             for i,y_ in enumerate(self.y):
                 self.y[i] = y_[self.order[i]]
-
-        print 'get_y',len(self.y),self.y
 
         # If not asking for a bin selection, return
         if xbin is None:
             return
 
         # If asking for a bin selection, find the appropriate mask and return that part of the y array.
-        start,end = self.get_bin_edges(xbin,nosheared=True)
-        mask      = np.s_[start:end]
+        start,end = self.get_bin_edges(xbin)
+        mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))]
         if return_mask:
             return self.selector.get_masked(self.y,mask),mask
         return self.selector.get_masked(self.y,mask)
@@ -795,7 +795,6 @@ class LinearSplit(object):
         Function to do mean, std, rms calculations
         """
 
-        print 'mean',len(x),x
         # Get response and weight.
         if mask is None:
             resp = self.calibrator.calibrate(col,x)
@@ -816,7 +815,6 @@ class LinearSplit(object):
         else:
             Rw = Rw2 = 1.
 
-        print w,x,Rw
         mean = np.sum(w*x)/Rw
         if return_std:
             std=np.sqrt(np.sum(w*(x-mean)**2)/Rw2)
