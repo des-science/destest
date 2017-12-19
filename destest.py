@@ -630,6 +630,7 @@ class Splitter(object):
 
         # If asking for a bin selection, find the appropriate mask and return that part of the x array.
         start,end = self.get_bin_edges(xbin)
+        print 'returning x bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))] # np.s_ creates an array slice 'object' that can be passed to functions
         if return_mask:
             return self.selector.get_masked(self.x,mask),mask
@@ -658,6 +659,7 @@ class Splitter(object):
 
         # If asking for a bin selection, find the appropriate mask and return that part of the y array.
         start,end = self.get_bin_edges(xbin)
+        print 'returning y bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))]
         if return_mask:
             return self.selector.get_masked(self.y,mask),mask
@@ -765,6 +767,7 @@ class LinearSplit(object):
                     yval,mask  = self.splitter.get_y(y,xbin,return_mask=True)
                     # get mean and std (for error) in this bin
                     ymean_,ystd_ = self.mean(y,yval,mask=mask)
+                    print 'mean',xbin,xmean[xbin],ymean_,ystd_
                     ymean.append( ymean_ )
                     ystd.append(  ystd_/np.sqrt(len(mask))  )
 
@@ -777,6 +780,12 @@ class LinearSplit(object):
         Function to do mean, std, rms calculations
         """
 
+        def scalar_sum(rw):
+            # catches scalar weights, responses and multiplies by the vector length for the mean
+            if np.isscalar(rw):
+                return rw*len(x)
+            return np.sum(rw)
+
         # Get response and weight.
         if mask is None:
             resp = self.calibrator.calibrate(col,self.splitter.y)
@@ -788,26 +797,15 @@ class LinearSplit(object):
         if R is not None:
 
             x  = np.copy(x)-c
-            Rw = w*R
+            Rw = scalar_sum(w*R)
             if return_std:
-                Rw2 = w*R**2
-            else:
-                Rw2 = 1.
-
-            if np.isscalar(Rw):
-                Rw  *= len(x)
-                Rw2 *= len(x)
-            else:
-                Rw  = np.sum(Rw)
-                Rw2 = np.sum(Rw2)
+                Rw2 = scalar_sum(w*R**2)
 
         else:
 
-            if np.isscalar(w):
-                Rw  = w*len(x)
-            else:
-                Rw  = np.sum(w)
-            Rw2 = Rw
+            Rw  = scalar_sum(w)
+            if return_std:
+                Rw2 = Rw
 
         mean = np.sum(w*x)/Rw
         if not (return_std or return_rms):
