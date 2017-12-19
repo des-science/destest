@@ -662,7 +662,7 @@ class Splitter(object):
             for i,y_ in enumerate(self.y):
                 self.y[i] = y_[self.order[i]]
 
-        print len(self.y),self.y
+        print 'get_y',len(self.y),self.y
 
         # If not asking for a bin selection, return
         if xbin is None:
@@ -777,7 +777,7 @@ class LinearSplit(object):
                     xmean.append( self.mean(x,xval,return_std=False) )
                     # get y array in bin xbin
                     yval,mask  = self.splitter.get_y(y,xbin,return_mask=True)
-                    print len(yval),yval
+                    print 'split',len(yval),yval
                     # get mean and std (for error) in this bin
                     ymean_,ystd_ = self.mean(y,yval,mask=mask)
                     ymean.append( ymean_ )
@@ -792,7 +792,7 @@ class LinearSplit(object):
         Function to do mean, std, rms calculations
         """
 
-        print len(x),x
+        print 'mean',len(x),x
         # Get response and weight.
         if mask is None:
             resp = self.calibrator.calibrate(col,x)
