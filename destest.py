@@ -729,7 +729,7 @@ class Splitter(object):
         """
 
         if nosheared:
-            return [self.edges[0][xbin]],[self.edges[0][xbin+1]]
+            return self.edges[0][xbin],self.edges[0][xbin+1]
 
         return [edge[xbin] for edge in self.edges],[edge[xbin+1] for edge in self.edges]
 
