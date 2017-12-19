@@ -5,6 +5,7 @@ import cPickle as pickle
 import os
 import sys
 import yaml
+import cProfile, pstats
 # and maybe a bit optimistic...
 from multiprocessing import Pool
 #from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
@@ -593,7 +594,7 @@ class Splitter(object):
         self.calibrator = calibrator
         self.source     = source
         self.testsuite  = testsuite
-        self.edges      = self.params['linear_bins']
+        self.bins       = self.params['linear_bins']
         self.x          = None
         self.y          = None
         self.xcol       = None
@@ -608,13 +609,6 @@ class Splitter(object):
 
         if nbins is not None:
             self.bins = nbins
-
-        else:
-
-            if hasattr(self.edges,"__len__"):
-                self.bins = len(self.edges)-1
-            else:
-                self.bins = self.edges
 
         return
 
@@ -703,19 +697,12 @@ class Splitter(object):
         Find the bin edges that split the data into the ranges you set in the yaml or into a number of equal-weighted bins.
         """
 
-        edges = []
-        if hasattr(self.edges,"__len__"):
-            # You provided a set of bin edges. Find the indexes that are associated with those limits.
-            for x_,w_ in tuple(zip(self.x,w)):
-                edges.append( np.searchsorted(x_, self.edges) )
-            self.edges = edges
-        else:
-            # You've provided a number of bins. Get the weights and define bin edges such that there exists equal weight in each bin.
-            w = self.calibrator.calibrate(self.xcol,self.x,return_full_w=True,weight_only=True)
-            for x_,w_ in tuple(zip(self.x,w)):
-                cumsum = (x_*w_).cumsum() / (x_*w_).sum()
-                edges.append( np.searchsorted(cumsum, np.linspace(0, 1, self.edges+1, endpoint=True)) )
-            self.edges = edges
+        self.edges = []
+        # You've provided a number of bins. Get the weights and define bin edges such that there exists equal weight in each bin.
+        w = self.calibrator.calibrate(self.xcol,self.x,return_full_w=True,weight_only=True)
+        for x_,w_ in tuple(zip(self.x,w)):
+            cumsum = (x_*w_).cumsum() / (x_*w_).sum()
+            self.edges.append( np.searchsorted(cumsum, np.linspace(0, 1, self.bins+1, endpoint=True)) )
 
         return
 
@@ -825,8 +812,16 @@ class LinearSplit(object):
 
         return mean,std,rms
 
+pr = cProfile.Profile()
 
 if __name__ == "__main__":
     """
     """
+    pr.enable()
+
     Testsuite( sys.argv[1] )
+
+    pr.disable()
+    ps = pstats.Stats(pr).sort_stats('time')
+    ps.print_stats(100)
+
