@@ -796,9 +796,9 @@ class LinearSplit(object):
 
         # Get response and weight.
         if mask is None:
-            resp = self.calibrator.calibrate(x,yval)
+            resp = self.calibrator.calibrate(col,x)
         else:
-            resp = self.calibrator.calibrate(x,yval,mask=mask)
+            resp = self.calibrator.calibrate(col,x,mask=mask)
         R,c,w = resp
 
         # do the calculation
