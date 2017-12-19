@@ -753,10 +753,10 @@ class LinearSplit(object):
 
         for x in self.split_x:
             print 'x col',x
-            xmean = []
-            ymean = []
-            ystd  = []
             for y in self.split_y:
+                xmean = []
+                ymean = []
+                ystd  = []
                 print 'y col',y
                 for xbin in range(self.splitter.bins):
                     # get x array in bin xbin
@@ -788,10 +788,9 @@ class LinearSplit(object):
 
         # Get response and weight.
         if mask is None:
-            resp = self.calibrator.calibrate(col,self.splitter.y)
+            R,c,w = self.calibrator.calibrate(col,self.splitter.y)
         else:
-            resp = self.calibrator.calibrate(col,self.splitter.y,mask=mask)
-        R,c,w = resp
+            R,c,w = self.calibrator.calibrate(col,self.splitter.y,mask=mask)
 
         # do the calculation
         if R is not None:
