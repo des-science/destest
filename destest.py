@@ -794,9 +794,9 @@ class LinearSplit(object):
 
         # Get response and weight.
         if mask is None:
-            resp = self.calibrator.calibrate(col,x)
+            resp = self.calibrator.calibrate(col,self.splitter.y)
         else:
-            resp = self.calibrator.calibrate(col,x,mask=mask)
+            resp = self.calibrator.calibrate(col,self.splitter.y,mask=mask)
         R,c,w = resp
 
         # do the calculation
@@ -813,6 +813,8 @@ class LinearSplit(object):
             Rw = Rw2 = 1.
 
         mean = np.sum(w*x)/Rw
+        if not (return_std or return_rms):
+            return mean
         if return_std:
             std=np.sqrt(np.sum(w*(x-mean)**2)/Rw2)
             if not return_rms:
@@ -821,9 +823,6 @@ class LinearSplit(object):
             rms=np.sqrt(np.sum((w*x)**2)/Rw)
             if not return_std:
                 return mean,rms
-
-        if not (return_std or return_rms):
-            return mean
 
         return mean,std,rms
 
