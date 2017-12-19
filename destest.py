@@ -601,6 +601,8 @@ class Splitter(object):
         self.edges      = self.params['linear_bins']
         self.x          = None
         self.y          = None
+        self.xcol       = None
+        self.ycol       = None
 
         if 'split_x' in self.params:
             for col in self.params['split_x']:
