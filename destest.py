@@ -478,7 +478,7 @@ class Selector(object):
             if np.isscalar(x):
                 return x
             else:
-                return x[snmm.getArray(self.mask[0])[mask[0]]]
+                return x[snmm.getArray(self.mask[0])][mask[0]]
 
         if np.isscalar(x[0]):
             return x
@@ -490,7 +490,7 @@ class Selector(object):
         Same as get_masked, but only return the mask.
         """
 
-        return [ snmm.getArray(self.mask[i])[mask_] for i,mask_ in enumerate(mask) ]
+        return [ np.where(snmm.getArray(self.mask[i]))[0]&[mask_] for i,mask_ in enumerate(mask) ]
 
 
 class Calibrator(object):
