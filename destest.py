@@ -630,7 +630,7 @@ class MetaCalib(Calibrator):
             if mask is not None:
                 eSp = np.sum(snmm.getArray(self.e1)[mask_[3]][mask[3]]*w[3])
                 eSm = np.sum(snmm.getArray(self.e1)[mask_[4]][mask[4]]*w[4])
-            Rs = esp/ws[3] - esm/ws[4]
+            Rs = eSp/ws[3] - eSm/ws[4]
         else:
             return 0.
 
