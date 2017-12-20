@@ -358,7 +358,7 @@ class H5Source(SourceParser):
 
     def close( self ):
 
-        if hasattr(self,hdf):
+        if hasattr(self,'hdf'):
             self.hdf.close()
 
 class DESDMSource(SourceParser):
