@@ -511,23 +511,13 @@ class Calibrator(object):
         self.params = params
         self.selector = selector
 
-    def get_w(self,mask):
-        """
-        Get the weights and the sum of the weights.
-        """
-
-        w  = self.selector.get_masked(self.w,mask)
-        mask_ = self.selector.get_mask(mask)
-        ws = [ scalar_sum(w_,len(mask_[i])) for i,w_ in enumerate(w)]
-        return w,ws
-
     def calibrate(self,col,mask=None,return_full_w=False,weight_only=False):
         """
         Return the calibration factor and weights, given potentially an ellipticity and selection.
         """
 
         # Get the weights
-        w,ws = self.get_w(mask)
+        w  = self.selector.get_masked(self.w,mask)
         if return_full_w:
             w_ = w
         else:
@@ -535,24 +525,25 @@ class Calibrator(object):
         if weight_only:
             return w_
 
-        # Get a selection response
-        Rs = self.select_resp(col,mask,w,ws)
-
-        # Check if an ellipticity - if so, return real calibration factors
         if col == self.params['e'][0]:
-            Rg1 = self.selector.get_masked(snmm.getArray(self.Rg1),mask)
-            R = np.sum(Rg1*w[0],)/ws[0]
-            print 'R',R,np.sum(Rg1*w[0]),ws[0],np.mean(Rg1)
-            R += Rs
+            Rg = self.selector.get_masked(snmm.getArray(self.Rg1),mask)
             c = self.selector.get_masked(self.c1,mask)
-            return R,c,w_
-        elif col == self.params['e'][1]:
-            Rg2 = self.selector.get_masked(snmm.getArray(self.Rg2),mask)
-            R = np.sum(Rg2*w[0])/ws[0]
-            R += Rs
+        if col == self.params['e'][1]:
+            Rg = self.selector.get_masked(snmm.getArray(self.Rg1),mask)
             c = self.selector.get_masked(self.c2,mask)
+
+        if col in self.params['e']:
+            
+            ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
+            # Get a selection response
+            Rs = self.select_resp(col,mask,w,ws)
+            R = np.sum(Rg*w[0],)/ws[0]
+            print 'R',R,np.sum(Rg*w[0]),ws[0],np.mean(Rg)
+            R += Rs
             return R,c,w_
+
         else:
+            
             return None,None,w_
 
     def select_resp(self,col,mask,w,ws):
@@ -620,19 +611,28 @@ class MetaCalib(Calibrator):
 
         # if an ellipticity column, calculate and return the selection response and weight
         if col in self.params['e']:
-            if len(mask)==1: # exit for non-sheared column selections
-                return 0.
-            mask_ = self.selector.get_mask(mask)
+            if mask is not None:
+                if len(mask)==1: # exit for non-sheared column selections
+                    return 0.
 
         if col == self.params['e'][0]:
-            Rs = np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1])/ws[1] - np.sum(snmm.getArray(self.e1)[mask_[2]]*w[2])/ws[2]
+            eSp = np.sum(snmm.getArray(self.e1)[self.selector.mask[1]]*w[1])
+            eSm = np.sum(snmm.getArray(self.e1)[self.selector.mask[2]]*w[2])
+            if mask is not None:
+                eSp = np.sum(snmm.getArray(self.e1)[self.selector.mask[1]][mask[1]]*w[1])
+                eSm = np.sum(snmm.getArray(self.e1)[self.selector.mask[2]][mask[2]]*w[2])
+            Rs = esp/ws[1] - esm/ws[2]
         elif col == self.params['e'][1]:
-            Rs = np.sum(snmm.getArray(self.e2)[mask_[3]]*w[3])/ws[3] - np.sum(snmm.getArray(self.e2)[mask_[4]]*w[4])/ws[4]
+            eSp = np.sum(snmm.getArray(self.e1)[self.selector.mask[3]]*w[3])
+            eSm = np.sum(snmm.getArray(self.e1)[self.selector.mask[4]]*w[4])
+            if mask is not None:
+                eSp = np.sum(snmm.getArray(self.e1)[self.selector.mask[3]][mask[3]]*w[3])
+                eSm = np.sum(snmm.getArray(self.e1)[self.selector.mask[4]][mask[4]]*w[4])
+            Rs = esp/ws[3] - esm/ws[4]
         else:
             return 0.
 
         Rs /= 2.*self.params['dg']
-        print 'Rs',Rs,np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1])/ws[1],np.sum(snmm.getArray(self.e1)[mask_[2]]*w[2])/ws[2],np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1]),ws[1],np.mean(snmm.getArray(self.e1)[mask_[1]])
 
         return Rs
 
@@ -845,22 +845,23 @@ class LinearSplit(object):
 
         for x in self.split_x:
             print 'x col',x
+            n     = []
+            xmean = []
+            xlow  = []
+            xhigh = []
+            for xbin in range(self.splitter.bins):
+                # get x array in bin xbin
+                xval       = self.splitter.get_x(x,xbin)
+                n.append( len(xval) )
+                xlow.append( xval[0] )
+                xhigh.append( xval[-1] )
+                # get mean values of x in this bin
+                xmean.append( self.mean(x,xval,return_std=False) )
             for y in self.split_y:
-                n     = []
-                xmean = []
-                xlow  = []
-                xhigh = []
+                print 'y col',y
                 ymean = []
                 ystd  = []
-                print 'y col',y
                 for xbin in range(self.splitter.bins):
-                    # get x array in bin xbin
-                    xval       = self.splitter.get_x(x,xbin)
-                    n.append( len(xval) )
-                    xlow.append( xval[0] )
-                    xhigh.append( xval[-1] )
-                    # get mean values of x in this bin
-                    xmean.append( self.mean(x,xval,return_std=False) )
                     # get y array in bin xbin
                     yval,mask  = self.splitter.get_y(y,xbin,return_mask=True)
                     # get mean and std (for error) in this bin
