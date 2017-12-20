@@ -494,7 +494,7 @@ class Selector(object):
         """
 
         if mask is None:
-            return snmm.getArray(self.mask[i])
+            return [ np.where(snmm.getArray(self.mask[i]))[0] for i in range(len(self.mask)) ]
 
         return [ np.where(snmm.getArray(self.mask[i]))[0][mask_] for i,mask_ in enumerate(mask) ]
 
