@@ -622,7 +622,7 @@ class MetaCalib(Calibrator):
         if col in self.params['e']:
             if len(mask)==1: # exit for non-sheared column selections
                 return 0.
-            mask_ = [ snmm.getArray(imask) for imask in self.selector.get_mask(mask) ]
+            mask_ = self.selector.get_mask(mask)
 
         if col == self.params['e'][0]:
             Rs = np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1])/ws[1] - np.sum(snmm.getArray(self.e1)[mask_[2]]*w[2])/ws[2]
