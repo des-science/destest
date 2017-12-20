@@ -666,6 +666,7 @@ class Splitter(object):
         start,end = self.get_bin_edges(xbin)
         # print 'returning y bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))]
+        print 'get_y',mask,start,end,self.edges
         if return_mask:
             return self.selector.get_masked(self.y,mask),mask
         return self.selector.get_masked(self.y,mask)
