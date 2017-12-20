@@ -680,7 +680,6 @@ class Splitter(object):
         start,end = self.get_bin_edges(xbin)
         # print 'returning y bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))]
-        print 'get_y',mask,start,end,self.edges
         mask      = [ order_[mask_] for order_,mask_ in tuple(zip(self.order,mask)) ]
         if return_mask:
             return self.y[start[0]:end[0]],mask
@@ -726,7 +725,6 @@ class Splitter(object):
         self.edges = []
         # You've provided a number of bins. Get the weights and define bin edges such that there exists equal weight in each bin.
         w = self.calibrator.calibrate(self.xcol,return_full_w=True,weight_only=True)
-        print 'get_edge_idx',self.x,w
         for x_,w_ in tuple(zip(self.x,w)):
             min_ = np.min(x_)
             if min_<0.:
@@ -787,13 +785,10 @@ class LinearSplit(object):
                 for xbin in range(self.splitter.bins):
                     # get x array in bin xbin
                     xval       = self.splitter.get_x(x,xbin)
-                    print xval
                     # get mean values of x in this bin
                     xmean.append( self.mean(x,xval,return_std=False) )
                     # get y array in bin xbin
                     yval,mask  = self.splitter.get_y(y,xbin,return_mask=True)
-                    print yval
-                    print 'iter_mean_mask',mask
                     # get mean and std (for error) in this bin
                     ymean_,ystd_ = self.mean(y,yval,mask=mask)
                     ymean.append( ymean_ )
