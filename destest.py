@@ -455,13 +455,13 @@ class Selector(object):
         # trim and return
         for i in range(len(x)):
             x[i] = x[i][snmm.getArray(self.mask_)]
+            print 'uncut',len(x[i])
         if uncut:
-            print 'uncut',len(x)
             return x
 
         for i in range(len(x)):
             x[i] = x[i][snmm.getArray(self.mask[i])]
-            print 'cut',len(x)
+            print 'cut',len(x[i])
         return x
 
     def get_masked( self, x, mask ):
