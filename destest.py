@@ -511,7 +511,7 @@ class Calibrator(object):
         """
 
         w  = self.selector.get_masked(self.w,mask)
-        ws = [ scalar_sum(w_,len(mask)) for w_ in w]
+        ws = [ scalar_sum(w_,len(mask[i])) for i,w_ in enumerate(w)]
         return w,ws
 
     def calibrate(self,col,mask=[np.s_[:]]*5,return_full_w=False,weight_only=False,include_Rg=False):
