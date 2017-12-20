@@ -134,6 +134,8 @@ class Testsuite(object):
 
             self.params     = param_file
 
+        print '-----',self.params['load_cache'] is bool
+
         # Archive yaml file used for results
         self.save_input_yaml()
 
@@ -388,17 +390,15 @@ class Selector(object):
             for mask_ in self.mask:
                 self.mask_ = self.mask_ | mask_
 
-            # Cut down masks to the limiting mask and convert to index arrays
+            # Cut down masks to the limiting mask
             # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
             for i in range(len(self.mask)):
                 self.mask[i] = self.mask[i][self.mask_]
-                self.mask[i] = np.where(self.mask[i])[0]
-            self.mask_ = np.where(self.mask_)[0]
 
             # save cache of masks to speed up reruns
             save_obj( [self.mask, self.mask_], mask_file )
 
-    def get_col( self, col, nosheared=False ):
+    def get_col( self, col, nosheared=False, uncut=False ):
         """
         Wrapper to retrieve a column of data from the source and trim to the limiting mask (mask_)
         """
@@ -406,8 +406,15 @@ class Selector(object):
         # x at this point is the full column
         x = self.source.read(col=col, nosheared=nosheared)
 
-        # trim to mask_ and return
-        return [ x[i][self.mask_] for i in range(len(x)) ]
+        # trim and return
+        for i in range(len(x)):
+            x[i] = x[i][self.mask_]
+        if uncut:
+            return x
+
+        for i in range(len(x)):
+            x[i] = x[i][self.mask]
+        return x
 
     def get_masked( self, x, mask ):
         """
@@ -426,7 +433,7 @@ class Selector(object):
         if np.isscalar(x[0]):
             return x
 
-        return [ x_[self.mask[i][mask[i]]] for i,x_ in enumerate(x) ]
+        return [ x_[self.mask[i]][mask[i]] for i,x_ in enumerate(x) ]
 
     def get_mask( self, mask ):
         """
@@ -461,12 +468,11 @@ class Calibrator(object):
         Get the weights and the sum of the weights.
         """
 
-        # cut weight to selection and calculate the sum for averages.
         w = self.selector.get_masked(self.w,mask)
         ws = [np.sum(w_) for w_ in w]
         return w,ws
 
-    def calibrate(self,col,val,mask=[np.s_[:]]*5,return_full_w=False,weight_only=False):
+    def calibrate(self,col,mask=[np.s_[:]]*5,return_full_w=False,weight_only=False):
         """
         Return the calibration factor and weights, given potentially an ellipticity and selection.
         """
@@ -481,7 +487,7 @@ class Calibrator(object):
             return w_
 
         # Get a selection response
-        Rs = self.select_resp(col,val,mask,w,ws)
+        Rs = self.select_resp(col,mask,w,ws)
 
         # Check if an ellipticity - if so, return real calibration factors
         if col == self.params['e'][0]:
@@ -499,7 +505,7 @@ class Calibrator(object):
         else:
             return None,None,w_
 
-    def select_resp(self,col,e,mask,w,ws):
+    def select_resp(self,col,mask,w,ws):
         """
         Return a zero selection response (default).
         """
@@ -533,35 +539,33 @@ class MetaCalib(Calibrator):
 
         self.Rg1 = self.Rg2 = 1.
         if 'Rg' in self.params:
-            self.Rg1 = self.selector.get_col(self.params['Rg'][0])
-            self.Rg2 = self.selector.get_col(self.params['Rg'][1])
+            self.Rg1 = self.selector.get_col(self.params['Rg'][0],uncut=True)
+            self.Rg2 = self.selector.get_col(self.params['Rg'][1],uncut=True)
+            self.e1  = self.selector.get_col(self.params['e'][0],nosheared=True,uncut=True)
+            self.e2  = self.selector.get_col(self.params['e'][1],nosheared=True,uncut=True)
         self.c1 = self.c2 = 0.
         if 'c' in self.params:
-            self.c1 = self.selector.get_col(self.params['c'][0])
-            self.c2 = self.selector.get_col(self.params['c'][1])
+            self.c1 = self.selector.get_col(self.params['c'][0],uncut=True)
+            self.c2 = self.selector.get_col(self.params['c'][1],uncut=True)
         self.w = [1] * 5
         if 'w' in self.params:
             self.w = self.selector.get_col(self.params['w'])
 
-    def select_resp(self,col,e,mask,w,ws):
+    def select_resp(self,col,mask,w,ws):
         """
         Get the selection response.
         """
 
-        print col,e,mask,w,ws
-
         # if an ellipticity column, calculate and return the selection response and weight
+        if col in self.params['e']:
+            if len(mask)==1: # exit for non-sheared column selections
+                return 0.
+            mask_ = self.selector.mask
+
         if col == self.params['e'][0]:
-            if len(mask)==1: # exit for non-sheared column selections
-                return 0.
-            mask_ = self.selector.get_mask(mask)
-            print mask_
-            Rs = np.sum(e[0][mask_[1]]*w[1])/ws[1]-np.sum(e[0][mask_[2]]*w[2])/ws[2]
+            Rs = np.sum(self.e1[0][mask_[1]][mask[1]]*w[1])/ws[1]-np.sum(self.e1[0][mask_[2]][mask[2]]*w[2])/ws[2]
         elif col == self.params['e'][1]:
-            if len(mask)==1: # exit for non-sheared column selections
-                return 0.
-            mask_ = self.selector.get_mask(mask)
-            Rs = np.sum(e[0][mask_[3]]*w[3])/ws[3]-np.sum(e[0][mask_[4]]*w[4])/ws[4]
+            Rs = np.sum(self.e2[0][mask_[3]][mask[3]]*w[3])/ws[3]-np.sum(self.e2[0][mask_[4]][mask[4]]*w[4])/ws[4]
         else:
             return 0.
 
@@ -644,13 +648,13 @@ class Splitter(object):
             return
 
         # If asking for a bin selection, find the appropriate mask and return that part of the x array.
-        start,end = self.get_bin_edges(xbin)
+        start,end = self.get_bin_edges(xbin,nosheared=True)
         # print 'returning x bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))] # np.s_ creates an array slice 'object' that can be passed to functions
         mask      = [ order_[mask_] for order_,mask_ in tuple(zip(self.order,mask)) ]
         if return_mask:
-            return self.selector.get_masked(self.x,mask),mask
-        return self.selector.get_masked(self.x,mask)
+            return self.x[start[0]:end[0]],mask
+        return self.x[start[0]:end[0]]
 
     def get_y( self, col, xbin=None, return_mask=False ):
         """
@@ -659,7 +663,7 @@ class Splitter(object):
         Optionally give a bin number, it will return the portion of the y array that falls in that bin. Can also optionally return the mask for that bin.
         """
 
-        if not hasattr(self,'xcol'):
+        if self.xcol is None:
             raise NameError('There is no x column associated with this splitter.')
 
         # If column doesn't already exist in splitter, read the data and order it to match x ordering for efficient splitting.
@@ -668,6 +672,7 @@ class Splitter(object):
             self.y = self.selector.get_col(col,nosheared=True)
             for i,y_ in enumerate(self.y):
                 self.y[i] = y_[self.order[i]]
+            self.y = self.y[0]
 
         # If not asking for a bin selection, return
         if xbin is None:
@@ -680,8 +685,8 @@ class Splitter(object):
         print 'get_y',mask,start,end,self.edges
         mask      = [ order_[mask_] for order_,mask_ in tuple(zip(self.order,mask)) ]
         if return_mask:
-            return self.selector.get_masked(self.y,mask),mask
-        return self.selector.get_masked(self.y,mask)
+            return self.y[start[0]:end[0]],mask
+        return self.y[start[0]:end[0]]
 
     def split( self, col ):
         """
@@ -711,6 +716,7 @@ class Splitter(object):
 
         # get bin edges
         self.get_edge_idx()
+        self.x = self.x[0]
 
         return
 
@@ -721,7 +727,7 @@ class Splitter(object):
 
         self.edges = []
         # You've provided a number of bins. Get the weights and define bin edges such that there exists equal weight in each bin.
-        w = self.calibrator.calibrate(self.xcol,self.x,return_full_w=True,weight_only=True)
+        w = self.calibrator.calibrate(self.xcol,return_full_w=True,weight_only=True)
         print 'get_edge_idx',self.x,w
         for x_,w_ in tuple(zip(self.x,w)):
             normcumsum = (x_*w_).cumsum() / (x_*w_).sum()
@@ -806,9 +812,9 @@ class LinearSplit(object):
 
         # Get response and weight.
         if mask is None:
-            R,c,w = self.calibrator.calibrate(col,self.splitter.y)
+            R,c,w = self.calibrator.calibrate(col)
         else:
-            R,c,w = self.calibrator.calibrate(col,self.splitter.y,mask=mask)
+            R,c,w = self.calibrator.calibrate(col,mask=mask)
 
         # do the calculation
         if R is not None:
