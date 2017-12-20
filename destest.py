@@ -540,14 +540,14 @@ class Calibrator(object):
 
         # Check if an ellipticity - if so, return real calibration factors
         if col == self.params['e'][0]:
-            Rg1 = self.selector.get_masked(snmm.getArray(self.Rg1),mask)[0]
-            R = np.sum(Rg1*w[0])/ws[0]
+            Rg1 = self.selector.get_masked(snmm.getArray(self.Rg1),mask)
+            R = np.sum(Rg1*w[0],)/ws[0]
             print 'R',R,np.sum(Rg1*w[0]),ws[0],np.mean(Rg1)
             R += Rs
             c = self.selector.get_masked(self.c1,mask)
             return R,c,w_
         elif col == self.params['e'][1]:
-            Rg2 = self.selector.get_masked(snmm.getArray(self.Rg2),mask)[0]
+            Rg2 = self.selector.get_masked(snmm.getArray(self.Rg2),mask)
             R = np.sum(Rg2*w[0])/ws[0]
             R += Rs
             c = self.selector.get_masked(self.c2,mask)
@@ -626,13 +626,13 @@ class MetaCalib(Calibrator):
 
         if col == self.params['e'][0]:
             Rs = np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1])/ws[1] - np.sum(snmm.getArray(self.e1)[mask_[2]]*w[2])/ws[2]
-            print 'Rs',Rs,np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1])/ws[1],np.sum(snmm.getArray(self.e1)[mask_[2]]*w[2])/ws[2],np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1]),ws[1],np.mean(snmm.getArray(self.e1)[mask_[1]])
         elif col == self.params['e'][1]:
             Rs = np.sum(snmm.getArray(self.e2)[mask_[3]]*w[3])/ws[3] - np.sum(snmm.getArray(self.e2)[mask_[4]]*w[4])/ws[4]
         else:
             return 0.
 
         Rs /= 2.*self.params['dg']
+        print 'Rs',Rs,np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1])/ws[1],np.sum(snmm.getArray(self.e1)[mask_[2]]*w[2])/ws[2],np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1]),ws[1],np.mean(snmm.getArray(self.e1)[mask_[1]])
 
         return Rs
 
