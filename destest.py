@@ -728,7 +728,12 @@ class Splitter(object):
         w = self.calibrator.calibrate(self.xcol,return_full_w=True,weight_only=True)
         print 'get_edge_idx',self.x,w
         for x_,w_ in tuple(zip(self.x,w)):
-            normcumsum = (x_*w_).cumsum() / (x_*w_).sum()
+            min_ = np.min(x_)
+            if min_<0.:
+                xw = (x_-min_)*w_
+            else:
+                xw = (x_)*w_
+            normcumsum = xw.cumsum() / xw.sum()
             self.edges.append( np.searchsorted(normcumsum, np.linspace(0, 1, self.bins+1, endpoint=True)) )
 
         return
