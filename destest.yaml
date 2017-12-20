@@ -15,13 +15,13 @@ use_mpi       : False
 
 # Tests to run
 # Calculate general statistics for all columns
-general_stats : [u'R11', u'R12', u'R21', u'R22', u'covmat_0_0', u'covmat_0_1', u'covmat_1_1', u'e1', u'e2', u'flux_err_i', u'flux_err_r', u'flux_err_z', u'flux_i', u'flux_r', u'flux_z', u'mask_frac', u'psf_e1', u'psf_e2', u'psf_size', u'size', u'size_err', u'size_ratio', u'snr']
+general_stats : ['R11', 'R12', 'R21', 'R22', 'covmat_0_0', 'covmat_0_1', 'covmat_1_1', 'e1', 'e2', 'flux_err_i', 'flux_err_r', 'flux_err_z', 'flux_i', 'flux_r', 'flux_z', 'mask_frac', 'psf_e1', 'psf_e2', 'psf_size', 'size', 'size_err', 'size_ratio', 'snr']
 # Do linear mean value splits by 'x' column list
 split_mean    : ['e1','e2','snr','psf_e1','psf_e2','size','psf_size','size_ratio','mask_frac','flux_i']
 split_x       : ['e1','e2','snr','psf_e1','psf_e2','size','psf_size','size_ratio','mask_frac','flux_i']
 split_by_w    : False
 # Calculte histograms
-hist_1d       : [u'R11', u'R12', u'R21', u'R22', u'covmat_0_0', u'covmat_0_1', u'covmat_1_1', u'e1', u'e2', u'flux_err_i', u'flux_err_r', u'flux_err_z', u'flux_i', u'flux_r', u'flux_z', u'mask_frac', u'psf_e1', u'psf_e2', u'psf_size', u'size', u'size_err', u'size_ratio', u'snr']
+hist_1d       : ['R11', 'R12', 'R21', 'R22', 'covmat_0_0', 'covmat_0_1', 'covmat_1_1', 'e1', 'e2', 'flux_err_i', 'flux_err_r', 'flux_err_z', 'flux_i', 'flux_r', 'flux_z', 'mask_frac', 'psf_e1', 'psf_e2', 'psf_size', 'size', 'size_err', 'size_ratio', 'snr']
 
 # Data source
 # calibration type
