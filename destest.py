@@ -620,7 +620,6 @@ class MetaCalib(Calibrator):
             eSp = np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1])
             eSm = np.sum(snmm.getArray(self.e1)[mask_[2]]*w[2])
             if mask is not None:
-                print snmm.getArray(self.e1),self.selector.mask,w,snmm.getArray(self.e1)[self.selector.mask[1]],mask
                 eSp = np.sum(snmm.getArray(self.e1)[mask_[1]][mask[1]]*w[1])
                 eSm = np.sum(snmm.getArray(self.e1)[mask_[2]][mask[2]]*w[2])
             Rs = eSp/ws[1] - eSm/ws[2]
@@ -923,16 +922,16 @@ if __name__ == "__main__":
     """
     pr.enable()
 
-    # from mpi_pool import MPIPool
-    # comm = MPI.COMM_WORLD
-    # pool = MPIPool(comm)
-    # if not pool.is_master():
-    #     pool.wait()
-    #     sys.exit(0)
+    from mpi_pool import MPIPool
+    comm = MPI.COMM_WORLD
+    pool = MPIPool(comm)
+    if not pool.is_master():
+        pool.wait()
+        sys.exit(0)
 
     Testsuite( sys.argv[1] )
 
-    # pool.close()
+    pool.close()
 
 
     pr.disable()
