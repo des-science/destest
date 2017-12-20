@@ -396,6 +396,8 @@ class Selector(object):
         Build the limiting mask for use in discarding any data that will never be used.
         """
 
+        mask = None
+
         # Setup mask file cache path.
         mask_file = file_path(self.params,'cache','mask',ftype='pickle')
         if self.params['load_cache']:
