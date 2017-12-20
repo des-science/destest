@@ -147,12 +147,17 @@ def write_table( params, table, subdir, name, var=None, var2=None):
     np.savetxt(fpath,table)
 
 
+def child_testsuite( params, selector, calibrator ):
+
+    Testsuite( params, selector=selector, calibrator=calibrator, child=True )
+
+
 class Testsuite(object):
     """
     Testsuite manager class. Initiated with a yaml file path or dictionary that contains necessary settings and instructions.
     """
 
-    def __init__( self, param_file, selector = None, calibrator = None, **kwargs ):
+    def __init__( self, param_file, selector = None, calibrator = None, child = False, **kwargs ):
 
         # Read in yaml information
         if isinstance(param_file, string_types):
@@ -203,15 +208,17 @@ class Testsuite(object):
         # Run tests
         if 'split_mean' in self.params:
 
-            if self.params['use_mpi']:
+            if self.params['use_mpi'] and (not child):
                 procs = comm.Get_size()
                 iter_list = [self.params['split_x'][i::procs] for i in xrange(procs)]
                 calcs = []
                 for proc in range(procs):
                     if iter_list[proc] == []:
                         continue
-                    calcs.append((self.params,self.selector,self.calibrator,self.source,iter_list[proc],self.params['split_mean']))
-                pool.map(LinearSplit, calcs)
+                    params = self.params.copy()
+                    params['split_x'] = iter_list[proc]
+                    calcs.append((params,self.selector,self.calibrator))
+                pool.map(child_testsuite, calcs)
             else:
                 LinearSplit(self.params,self.selector,self.calibrator,self.source,self.params['split_x'],self.params['split_mean'])
 
