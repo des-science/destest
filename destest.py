@@ -647,9 +647,10 @@ class Splitter(object):
         start,end = self.get_bin_edges(xbin)
         # print 'returning x bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))] # np.s_ creates an array slice 'object' that can be passed to functions
+        mask      = [ order_[mask_] for order_,mask_ in tuple(zip(self.order,mask)) ]
         if return_mask:
-            return self.selector.get_masked(self.x,self.order[mask]),self.order[mask]
-        return self.selector.get_masked(self.x,self.order[mask])
+            return self.selector.get_masked(self.x,mask),mask
+        return self.selector.get_masked(self.x,mask)
 
     def get_y( self, col, xbin=None, return_mask=False ):
         """
