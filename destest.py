@@ -840,13 +840,19 @@ class LinearSplit(object):
         for x in self.split_x:
             print 'x col',x
             for y in self.split_y:
+                n     = []
                 xmean = []
+                xlow  = []
+                xhigh = []
                 ymean = []
                 ystd  = []
                 print 'y col',y
                 for xbin in range(self.splitter.bins):
                     # get x array in bin xbin
                     xval       = self.splitter.get_x(x,xbin)
+                    n.append( len(xval) )
+                    xlow.append( xval[0] )
+                    xhigh.append( xval[-1] )
                     # get mean values of x in this bin
                     xmean.append( self.mean(x,xval,return_std=False) )
                     # get y array in bin xbin
@@ -854,10 +860,10 @@ class LinearSplit(object):
                     # get mean and std (for error) in this bin
                     ymean_,ystd_ = self.mean(y,yval,mask=mask)
                     ymean.append( ymean_ )
-                    ystd.append( ystd_/np.sqrt(len(mask)) )
+                    ystd.append( ystd_/np.sqrt(n[xbin]) )
 
                 # Save results
-                table = np.array([xmean,ymean,ystd]).T
+                table = np.array([n,xlow,xmean,xhigh,ymean,ystd]).T
                 print 'mean',table
                 write_table(self.params, table,'test_output','linear_split',var=x,var2=y)
 
@@ -871,6 +877,7 @@ class LinearSplit(object):
             R,c,w = self.calibrator.calibrate(col)
         else:
             R,c,w = self.calibrator.calibrate(col,mask=mask)
+        print R,c,w
 
         # do the calculation
         if R is not None:
