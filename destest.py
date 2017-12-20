@@ -471,6 +471,9 @@ class Selector(object):
         Accept a mask and column(s), apply the mask jointly with selector.mask (mask from yaml selection) and return masked array.
         """
 
+        if mask is None:
+            mask = [np.s_[:]]*5
+
         if type(mask) is not list:
             mask = [ mask ]
 
@@ -485,10 +488,13 @@ class Selector(object):
 
         return [ x_[snmm.getArray(self.mask[i])][mask[i]] for i,x_ in enumerate(x) ]
 
-    def get_mask( self, mask ):
+    def get_mask( self, mask=None ):
         """
         Same as get_masked, but only return the mask.
         """
+
+        if mask is None:
+            return snmm.getArray(self.mask[i])
 
         return [ np.where(snmm.getArray(self.mask[i]))[0][mask_] for i,mask_ in enumerate(mask) ]
 
@@ -511,17 +517,17 @@ class Calibrator(object):
         """
 
         w  = self.selector.get_masked(self.w,mask)
-        ws = [ scalar_sum(w_,len(mask[i])) for i,w_ in enumerate(w)]
+        mask_ = self.selector.get_mask(mask)
+        ws = [ scalar_sum(w_,len(mask_[i])) for i,w_ in enumerate(w)]
         return w,ws
 
-    def calibrate(self,col,mask=[np.s_[:]]*5,return_full_w=False,weight_only=False):
+    def calibrate(self,col,mask=None,return_full_w=False,weight_only=False):
         """
         Return the calibration factor and weights, given potentially an ellipticity and selection.
         """
 
-        mask_ = self.selector.get_mask(mask)
         # Get the weights
-        w,ws = self.get_w(mask_)
+        w,ws = self.get_w(mask)
         if return_full_w:
             w_ = w
         else:
@@ -530,21 +536,21 @@ class Calibrator(object):
             return w_
 
         # Get a selection response
-        Rs = self.select_resp(col,mask_,w,ws)
+        Rs = self.select_resp(col,mask,w,ws)
 
         # Check if an ellipticity - if so, return real calibration factors
         if col == self.params['e'][0]:
-            Rg1 = self.selector.get_masked(snmm.getArray(self.Rg1),mask_)[0]
+            Rg1 = self.selector.get_masked(snmm.getArray(self.Rg1),mask)[0]
             R = np.sum(Rg1*w[0])/ws[0]
             print 'R',R,np.sum(Rg1*w[0]),ws[0],np.mean(Rg1)
             R += Rs
-            c = self.selector.get_masked(self.c1,mask_)
+            c = self.selector.get_masked(self.c1,mask)
             return R,c,w_
         elif col == self.params['e'][1]:
-            Rg2 = self.selector.get_masked(snmm.getArray(self.Rg2),mask_)[0]
+            Rg2 = self.selector.get_masked(snmm.getArray(self.Rg2),mask)[0]
             R = np.sum(Rg2*w[0])/ws[0]
             R += Rs
-            c = self.selector.get_masked(self.c2,mask_)
+            c = self.selector.get_masked(self.c2,mask)
             return R,c,w_
         else:
             return None,None,w_
@@ -616,13 +622,13 @@ class MetaCalib(Calibrator):
         if col in self.params['e']:
             if len(mask)==1: # exit for non-sheared column selections
                 return 0.
-            mask_ = self.selector.mask
+            mask_ = [ snmm.getArray(imask) for imask in self.selector.get_mask(mask) ]
 
         if col == self.params['e'][0]:
-            Rs = np.sum(snmm.getArray(self.e1)[snmm.getArray(mask_[1])][mask[1]]*w[1])/ws[1] - np.sum(snmm.getArray(self.e1)[snmm.getArray(mask_[2])][mask[2]]*w[2])/ws[2]
-            print 'Rs',Rs,np.sum(snmm.getArray(self.e1)[snmm.getArray(mask_[1])][mask[1]]*w[1])/ws[1],np.sum(snmm.getArray(self.e1)[snmm.getArray(mask_[2])][mask[2]]*w[2])/ws[2],np.sum(snmm.getArray(self.e1)[snmm.getArray(mask_[1])][mask[1]]*w[1]),ws[1],np.mean(snmm.getArray(self.e1)[snmm.getArray(mask_[1])][mask[1]])
+            Rs = np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1])/ws[1] - np.sum(snmm.getArray(self.e1)[mask_[2]]*w[2])/ws[2]
+            print 'Rs',Rs,np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1])/ws[1],np.sum(snmm.getArray(self.e1)[mask_[2]]*w[2])/ws[2],np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1]),ws[1],np.mean(snmm.getArray(self.e1)[mask_[1]])
         elif col == self.params['e'][1]:
-            Rs = np.sum(snmm.getArray(self.e2)[snmm.getArray(mask_[3])][mask[3]]*w[3])/ws[3] - np.sum(snmm.getArray(self.e2)[snmm.getArray(mask_[4])][mask[4]]*w[4])/ws[4]
+            Rs = np.sum(snmm.getArray(self.e2)[mask_[3]]*w[3])/ws[3] - np.sum(snmm.getArray(self.e2)[mask_[4]]*w[4])/ws[4]
         else:
             return 0.
 
