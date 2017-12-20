@@ -782,10 +782,12 @@ class LinearSplit(object):
                 for xbin in range(self.splitter.bins):
                     # get x array in bin xbin
                     xval       = self.splitter.get_x(x,xbin)
+                    print xval
                     # get mean values of x in this bin
                     xmean.append( self.mean(x,xval[0],return_std=False) )
                     # get y array in bin xbin
                     yval,mask  = self.splitter.get_y(y,xbin,return_mask=True)
+                    print yval
                     print 'iter_mean_mask',mask
                     # get mean and std (for error) in this bin
                     ymean_,ystd_ = self.mean(y,yval,mask=mask)
