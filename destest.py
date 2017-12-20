@@ -9,7 +9,7 @@ import cProfile, pstats
 import time
 # and maybe a bit optimistic...
 from multiprocessing import Pool
-# from mpi4py import MPI
+from mpi4py import MPI
 from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
 
 if sys.version_info[0] == 3:
