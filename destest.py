@@ -155,6 +155,13 @@ def child_testsuite( calc ):
     Testsuite( params, selector=selector, calibrator=calibrator, child=True )
 
 
+def scalar_sum(x,length):
+    # catches scalar weights, responses and multiplies by the vector length for the mean
+    if np.isscalar(x):
+        return x*length
+    return np.sum(x)
+
+
 class Testsuite(object):
     """
     Testsuite manager class. Initiated with a yaml file path or dictionary that contains necessary settings and instructions.
@@ -510,8 +517,8 @@ class Calibrator(object):
         Get the weights and the sum of the weights.
         """
 
-        w = self.selector.get_masked(self.w,mask)
-        ws = [np.sum(w_) for w_ in w]
+        w  = self.selector.get_masked(self.w,mask)
+        ws = [ scalar_sum(w_,len(mask)) for w_ in w]
         return w,ws
 
     def calibrate(self,col,mask=[np.s_[:]]*5,return_full_w=False,weight_only=False,include_Rg=False):
@@ -866,12 +873,6 @@ class LinearSplit(object):
         Function to do mean, std, rms calculations
         """
 
-        def scalar_sum(rw):
-            # catches scalar weights, responses and multiplies by the vector length for the mean
-            if np.isscalar(rw):
-                return rw*len(x)
-            return np.sum(rw)
-
         # Get response and weight.
         if mask is None:
             R,c,w = self.calibrator.calibrate(col)
@@ -882,13 +883,13 @@ class LinearSplit(object):
         if R is not None:
 
             x  = np.copy(x)-c
-            Rw = scalar_sum(w*R)
+            Rw = scalar_sum(w*R,len(x))
             if return_std:
-                Rw2 = scalar_sum(w*R**2)
+                Rw2 = scalar_sum(w*R**2,len(x))
 
         else:
 
-            Rw  = scalar_sum(w)
+            Rw  = scalar_sum(w,len(x))
             if return_std:
                 Rw2 = Rw
 
