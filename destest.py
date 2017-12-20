@@ -710,6 +710,7 @@ class Splitter(object):
         self.edges = []
         # You've provided a number of bins. Get the weights and define bin edges such that there exists equal weight in each bin.
         w = self.calibrator.calibrate(self.xcol,self.x,return_full_w=True,weight_only=True)
+        print 'get_edge_idx',self.x,w
         for x_,w_ in tuple(zip(self.x,w)):
             normcumsum = (x_*w_).cumsum() / (x_*w_).sum()
             self.edges.append( np.searchsorted(normcumsum, np.linspace(0, 1, self.bins+1, endpoint=True)) )
