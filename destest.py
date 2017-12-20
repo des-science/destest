@@ -238,8 +238,6 @@ class Testsuite(object):
             else:
                 LinearSplit(self.params,self.selector,self.calibrator,self.source,self.params['split_x'],self.params['split_mean'])
 
-        if 'geo_stats' in self.params:
-
 
     def save_input_yaml( self ):
         """
