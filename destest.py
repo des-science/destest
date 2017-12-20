@@ -174,7 +174,6 @@ class Testsuite(object):
 
             self.params     = param_file
 
-
         # Set up classes that manage data
         # Source is an HDF5 file.
         if self.params['source'] == 'hdf5':
@@ -274,8 +273,6 @@ class H5Source(SourceParser):
 
         super(H5Source,self).__init__(params)
 
-    def open( self ):
-
         if 'filename' not in self.params.keys():
             raise NameError('Must provide a filename for hdf5 source.')
         if 'table' not in self.params.keys():
@@ -305,7 +302,15 @@ class H5Source(SourceParser):
 
             raise NameError('Need group name for hdf5 file.')
 
+        self.close()
+
+    def open( self ):
+
+            self.hdf = h5py.File(self.params['filename'], mode = 'r+')
+
     def read( self, col=None, rows=None, nosheared=False ):
+
+        self.open()
 
         def add_out( table, rows, col ):
             """
@@ -346,6 +351,8 @@ class H5Source(SourceParser):
                 out.append( add_out(t,rows,col) )
             else:
                 out.append( add_out(t,None,col) )
+
+        self.close()
 
         return out
 
@@ -425,13 +432,13 @@ class Selector(object):
             save_obj( [mask, mask_], mask_file )
 
         self.mask_ = snmm.createArray((len(mask_),), dtype=np.int64)
-        snmm.getArray(self.mask_)[:] = mask_
+        snmm.getArray(self.mask_)[:] = mask_[:]
         mask_ = None
 
         self.mask = []
         for i in range(len(mask)):
             self.mask.append( snmm.createArray((len(mask[i]),), dtype=np.bool) )
-            snmm.getArray(self.mask[i])[:] = mask[i]
+            snmm.getArray(self.mask[i])[:] = mask[i][:]
             mask[i] = None
 
     def get_col( self, col, nosheared=False, uncut=False ):
@@ -575,16 +582,16 @@ class MetaCalib(Calibrator):
             e1  = self.selector.get_col(self.params['e'][0],nosheared=True,uncut=True)[0]
             e2  = self.selector.get_col(self.params['e'][1],nosheared=True,uncut=True)[0]
             self.Rg1 = snmm.createArray((len(Rg1),), dtype=np.float64)
-            snmm.getArray(self.Rg1)[:] = Rg1
+            snmm.getArray(self.Rg1)[:] = Rg1[:]
             Rg1 = None
             self.Rg2 = snmm.createArray((len(Rg2),), dtype=np.float64)
-            snmm.getArray(self.Rg2)[:] = Rg2
+            snmm.getArray(self.Rg2)[:] = Rg2[:]
             Rg2 = None
             self.e1 = snmm.createArray((len(e1),), dtype=np.float64)
-            snmm.getArray(self.e1)[:] = e1
+            snmm.getArray(self.e1)[:] = e1[:]
             e1 = None
             self.e2 = snmm.createArray((len(e2),), dtype=np.float64)
-            snmm.getArray(self.e2)[:] = e2
+            snmm.getArray(self.e2)[:] = e2[:]
             e2 = None
         self.c1 = self.c2 = 0.
         if 'c' in self.params:
