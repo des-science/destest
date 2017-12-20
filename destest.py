@@ -9,7 +9,7 @@ import cProfile, pstats
 import time
 # and maybe a bit optimistic...
 from multiprocessing import Pool
-import mpi4py
+from mpi4py import MPI
 from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
 
 if sys.version_info[0] == 3:
@@ -897,7 +897,7 @@ if __name__ == "__main__":
     # pr.enable()
 
     from mpi_pool import MPIPool
-    comm = mpi4py.MPI.COMM_WORLD
+    comm = MPI.COMM_WORLD
     pool = MPIPool(comm)
     if not pool.is_master():
         sim = None
