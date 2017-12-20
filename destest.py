@@ -483,7 +483,7 @@ class Calibrator(object):
             w_ = w[0]
         if weight_only:
             if include_Rg:
-                return w_,(self.selector.get_masked(self.Rg1,mask)+self.selector.get_masked(self.Rg2,mask))/2.
+                return w_,(self.selector.get_masked(self.Rg1,mask)+self.selector.get_masked(self.Rg2,mask))[0]/2.
             else:
                 return w_
 
@@ -492,13 +492,13 @@ class Calibrator(object):
 
         # Check if an ellipticity - if so, return real calibration factors
         if col == self.params['e'][0]:
-            Rg1 = self.selector.get_masked(self.Rg1,mask)
+            Rg1 = self.selector.get_masked(self.Rg1,mask)[0]
             R = np.sum(Rg1*w[0])/ws
             R += Rs
             c = self.selector.get_masked(self.c1,mask)
             return R,c,w_
         elif col == self.params['e'][1]:
-            Rg2 = self.selector.get_masked(self.Rg2,mask)
+            Rg2 = self.selector.get_masked(self.Rg2,mask)[0]
             R = np.sum(Rg2*w[0])/ws
             R += Rs
             c = self.selector.get_masked(self.c2,mask)
