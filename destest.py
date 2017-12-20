@@ -148,7 +148,9 @@ def write_table( params, table, subdir, name, var=None, var2=None):
     np.savetxt(fpath,table)
 
 
-def child_testsuite( params, selector, calibrator ):
+def child_testsuite( calc ):
+
+    params, selector, calibrator = calc
 
     Testsuite( params, selector=selector, calibrator=calibrator, child=True )
 
