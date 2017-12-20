@@ -263,13 +263,6 @@ class SourceParser(object):
     def close( self ):
         raise NotImplementedError('Subclass '+self.__class__.__name__+' should have method close().')
 
-    def __del__( self ):
-        """
-        Close connection to external data sources.
-        """
-
-        self.close()
-
 
 class H5Source(SourceParser):
     """
