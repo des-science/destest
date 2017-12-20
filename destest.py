@@ -135,6 +135,8 @@ class Testsuite(object):
             self.params     = param_file
 
         print '-----',self.params['load_cache'] is bool
+        print '-----',self.params['load_cache'] == False
+        print '-----',self.params['load_cache'] == True
 
         # Archive yaml file used for results
         self.save_input_yaml()
