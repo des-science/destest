@@ -134,10 +134,6 @@ class Testsuite(object):
 
             self.params     = param_file
 
-        print '-----',self.params['load_cache'] is bool
-        print '-----',self.params['load_cache'] == False
-        print '-----',self.params['load_cache'] == True
-
         # Archive yaml file used for results
         self.save_input_yaml()
 
@@ -415,7 +411,7 @@ class Selector(object):
             return x
 
         for i in range(len(x)):
-            x[i] = x[i][self.mask]
+            x[i] = x[i][self.mask[i]]
         return x
 
     def get_masked( self, x, mask ):
