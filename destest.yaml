@@ -11,16 +11,17 @@ output      : .
 # If False, testsuite will terminate if the output directory already exists.
 output_exists : True 
 
-use_mpi       : True
+use_mpi       : False
 
 # Tests to run
 # Calculate general statistics for all columns
-general_stats : 
+general_stats : [u'R11', u'R12', u'R21', u'R22', u'covmat_0_0', u'covmat_0_1', u'covmat_1_1', u'e1', u'e2', u'flux_err_i', u'flux_err_r', u'flux_err_z', u'flux_i', u'flux_r', u'flux_z', u'mask_frac', u'psf_e1', u'psf_e2', u'psf_size', u'size', u'size_err', u'size_ratio', u'snr']
 # Do linear mean value splits by 'x' column list
-split_mean    : ['e1'] #,'e2','flux_r']
-split_x       : ['snr','psf_e1','psf_e2','size']
+split_mean    : ['e1','e2','snr','psf_e1','psf_e2','size','psf_size','size_ratio','mask_frac','flux_i']
+split_x       : ['e1','e2','snr','psf_e1','psf_e2','size','psf_size','size_ratio','mask_frac','flux_i']
 split_by_w    : False
-
+# Calculte histograms
+hist_1d       : [u'R11', u'R12', u'R21', u'R22', u'covmat_0_0', u'covmat_0_1', u'covmat_1_1', u'e1', u'e2', u'flux_err_i', u'flux_err_r', u'flux_err_z', u'flux_i', u'flux_r', u'flux_z', u'mask_frac', u'psf_e1', u'psf_e2', u'psf_size', u'size', u'size_err', u'size_ratio', u'snr']
 
 # Data source
 # calibration type
@@ -41,6 +42,7 @@ dg         : 0.1
 # columns with which to mask the catalog
 select_cols : ['snr','snr','size_ratio','flags']
 # expressions by which to mask (must match 1-1 the list of select_cols)
+# select_exp   : ['5<col','col<500','col>0.25','col==0']
 select_exp   : ['10<col','col<100','col>0.5','col==0']
 
 # Catalog dicts

@@ -9,7 +9,7 @@ import cProfile, pstats
 import time
 # and maybe a bit optimistic...
 from multiprocessing import Pool
-from mpi4py import MPI
+# from mpi4py import MPI
 from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
 
 if sys.version_info[0] == 3:
@@ -116,7 +116,7 @@ def convert_mcal_to_h5_v2( catdir='/global/project/projectdirs/des/wl/desdata/us
 
     f.close()
 
-def file_path( params, subdir, name, var=None, var2=None, ftype='txt' ):
+def file_path( params, subdir, name, var=None, var2=None, var3=None, ftype='txt' ):
     """
     Set up a file path, and create the path if it doesn't exist.
     """
@@ -125,6 +125,8 @@ def file_path( params, subdir, name, var=None, var2=None, ftype='txt' ):
         name += '_' + var
     if var2 is not None:
         name += '_' + var2
+    if var3 is not None:
+        name += '_' + var3
     name += '.' + ftype
 
     fpath = os.path.join(params['output'],params['param_file'][:params['param_file'].index('.')],subdir)
@@ -216,6 +218,9 @@ class Testsuite(object):
             self.calibrator = calibrator
 
         # Run tests
+        if 'general_stats' in self.params:
+            LinearSplit(self.params,self.selector,self.calibrator,self.source,self.params['coadd_objects_id'],self.params['general_stats'],bins=1)
+
         if 'split_mean' in self.params:
 
             if self.params['use_mpi'] and (not child):
@@ -232,6 +237,8 @@ class Testsuite(object):
                 pool.map(child_testsuite, calcs)
             else:
                 LinearSplit(self.params,self.selector,self.calibrator,self.source,self.params['split_x'],self.params['split_mean'])
+
+        if 'geo_stats' in self.params:
 
 
     def save_input_yaml( self ):
@@ -839,15 +846,15 @@ class LinearSplit(object):
             self.params['split_mean'] = self.source.cols
 
         self.calibrator = calibrator
-        self.splitter   = Splitter(params,selector,calibrator,source,nbins)
+        self.splitter   = Splitter(params,selector,calibrator,source,nbins=nbins)
         self.split_x    = split_x
         self.split_y    = split_y
         self.step       = 0
 
         # 'step' and this separate call is meant as a placeholder for potential parallelisation
-        self.iter_mean()
+        self.iter()
 
-    def iter_mean( self ):
+    def iter( self ):
         """
         Loop over x columns (quantities binned by) and y columns (quantities to perform operations on in bins of x), perform the operations, and save the results
         """
@@ -865,7 +872,7 @@ class LinearSplit(object):
                 xlow.append( xval[0] )
                 xhigh.append( xval[-1] )
                 # get mean values of x in this bin
-                xmean.append( self.mean(x,xval,return_std=False) )
+                xmean.append( mean(x,xval,self.calibrator,return_std=False) )
             for y in self.split_y:
                 print 'y col',y
                 ymean = []
@@ -874,54 +881,102 @@ class LinearSplit(object):
                     # get y array in bin xbin
                     yval,mask  = self.splitter.get_y(y,xbin,return_mask=True)
                     # get mean and std (for error) in this bin
-                    ymean_,ystd_ = self.mean(y,yval,mask=mask)
+                    ymean_,ystd_ = mean(y,yval,self.calibrator,mask=mask)
                     ymean.append( ymean_ )
                     ystd.append( ystd_/np.sqrt(n[xbin]) )
 
                 # Save results
                 table = np.array([n,xlow,xmean,xhigh,ymean,ystd]).T
                 print 'mean',table
-                write_table(self.params, table,'test_output','linear_split',var=x,var2=y)
+                write_table(self.params, table,'test_output','linear_split',var=x,var2=y,var3=str(self.splitter.bins))
 
-    def mean( self, col, x, mask=None, return_std=True, return_rms=False ):
-        """
-        Function to do mean, std, rms calculations
-        """
 
-        # Get response and weight.
-        if mask is None:
-            R,c,w = self.calibrator.calibrate(col)
+class GeneralStats(object):
+    """
+    Test class to do linear splitting (operations on binned data not at the 2pt level).
+    Instantiate with a testsuite object and opetionally a function to operate on the bins (not fully implemented).
+    """
+
+    def __init__( self, params, selector, calibrator, source, split, func=np.mean, **kwargs ):
+
+        self.params = params
+        self.source = source
+        if self.params['general_stats'] is not None:
+            for col in self.params['general_stats']:
+                if col not in self.source.cols:
+                    raise NameError(col + ' not in source.')
         else:
-            R,c,w = self.calibrator.calibrate(col,mask=mask)
-        print 'Rcw',col,R,c,w
+            self.params['general_stats'] = self.source.cols
 
-        # do the calculation
-        if R is not None:
+        self.calibrator = calibrator
+        self.splitter   = Splitter(params,selector,calibrator,source,nbins=1)
+        self.split      = split
+        self.step       = 0
 
-            x  = np.copy(x)-c
-            Rw = scalar_sum(w*R,len(x))
-            if return_std:
-                Rw2 = scalar_sum(w*R**2,len(x))
+        # 'step' and this separate call is meant as a placeholder for potential parallelisation
+        self.iter()
 
-        else:
+    def iter( self ):
+        """
+        Loop over x columns (quantities binned by) and y columns (quantities to perform operations on in bins of x), perform the operations, and save the results
+        """
 
-            Rw  = scalar_sum(w,len(x))
-            if return_std:
-                Rw2 = Rw
+        table = np.empty(len(self.split),dtype=[('col',str)]+[('min',float)]+[('max',float)]+[('mean',float)]+[('std',float)]+[('rms',float)])
+        for i,x in enumerate(self.split):
+            print 'x col',x
+            # get x array in bin xbin
+            table['col'][i] = x
+            xval = self.splitter.get_x(x,0)
+            table['min'][i] = xval[0]
+            table['max'][i] = xval[-1]
+            # get mean values of x in this bin
+            table['mean'][i],table['std'][i],table['rms'][i] = mean(x,xval,self.calibrator,return_std=True,return_rms=True)
 
-        mean = np.sum(w*x)/Rw
-        if not (return_std or return_rms):
-            return mean
+        # Save results
+        print 'mean',table
+        write_table(self.params, table,'test_output','general_stats',var=x)
+
+
+def mean( col, x, calibrator, mask=None, return_std=True, return_rms=False ):
+    """
+    Function to do mean, std, rms calculations
+    """
+
+    # Get response and weight.
+    if mask is None:
+        R,c,w = calibrator.calibrate(col)
+    else:
+        R,c,w = calibrator.calibrate(col,mask=mask)
+    # print 'Rcw',col,R,c,w
+
+    # do the calculation
+    if R is not None:
+
+        x  = np.copy(x)-c
+        Rw = scalar_sum(w*R,len(x))
         if return_std:
-            std=np.sqrt(np.sum(w*(x-mean)**2)/Rw2)
-            if not return_rms:
-                return mean,std
-        if return_rms:
-            rms=np.sqrt(np.sum((w*x)**2)/Rw)
-            if not return_std:
-                return mean,rms
+            Rw2 = scalar_sum(w*R**2,len(x))
 
-        return mean,std,rms
+    else:
+
+        Rw  = scalar_sum(w,len(x))
+        if return_std:
+            Rw2 = Rw
+
+    mean = np.sum(w*x)/Rw
+    if not (return_std or return_rms):
+        return mean
+    if return_std:
+        std=np.sqrt(np.sum(w*(x-mean)**2)/Rw2)
+        if not return_rms:
+            return mean,std
+    if return_rms:
+        rms=np.sqrt(np.sum((w*x)**2)/Rw)
+        if not return_std:
+            return mean,rms
+
+    return mean,std,rms
+
 
 pr = cProfile.Profile()
 
@@ -930,16 +985,16 @@ if __name__ == "__main__":
     """
     pr.enable()
 
-    from mpi_pool import MPIPool
-    comm = MPI.COMM_WORLD
-    pool = MPIPool(comm)
-    if not pool.is_master():
-        pool.wait()
-        sys.exit(0)
+    # from mpi_pool import MPIPool
+    # comm = MPI.COMM_WORLD
+    # pool = MPIPool(comm)
+    # if not pool.is_master():
+    #     pool.wait()
+    #     sys.exit(0)
 
     Testsuite( sys.argv[1] )
 
-    pool.close()
+    # pool.close()
 
 
     pr.disable()
