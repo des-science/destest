@@ -219,7 +219,7 @@ class Testsuite(object):
 
         # Run tests
         if 'general_stats' in self.params:
-            LinearSplit(self.params,self.selector,self.calibrator,self.source,self.params['coadd_objects_id'],self.params['general_stats'],bins=1)
+            GeneralStats(self.params,self.selector,self.calibrator,self.source,self.params['general_stats'])
 
         if 'split_mean' in self.params:
 
