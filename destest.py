@@ -614,21 +614,22 @@ class MetaCalib(Calibrator):
             if mask is not None:
                 if len(mask)==1: # exit for non-sheared column selections
                     return 0.
+            mask_ = [ snmm.getArray(imask) for imask in self.selector.mask ]
 
         if col == self.params['e'][0]:
-            eSp = np.sum(snmm.getArray(self.e1)[self.selector.mask[1]]*w[1])
-            eSm = np.sum(snmm.getArray(self.e1)[self.selector.mask[2]]*w[2])
+            eSp = np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1])
+            eSm = np.sum(snmm.getArray(self.e1)[mask_[2]]*w[2])
             if mask is not None:
                 print snmm.getArray(self.e1),self.selector.mask,w,snmm.getArray(self.e1)[self.selector.mask[1]],mask
-                eSp = np.sum(snmm.getArray(self.e1)[self.selector.mask[1]][mask[1]]*w[1])
-                eSm = np.sum(snmm.getArray(self.e1)[self.selector.mask[2]][mask[2]]*w[2])
+                eSp = np.sum(snmm.getArray(self.e1)[mask_[1]][mask[1]]*w[1])
+                eSm = np.sum(snmm.getArray(self.e1)[mask_[2]][mask[2]]*w[2])
             Rs = esp/ws[1] - esm/ws[2]
         elif col == self.params['e'][1]:
-            eSp = np.sum(snmm.getArray(self.e1)[self.selector.mask[3]]*w[3])
-            eSm = np.sum(snmm.getArray(self.e1)[self.selector.mask[4]]*w[4])
+            eSp = np.sum(snmm.getArray(self.e1)[mask_[3]]*w[3])
+            eSm = np.sum(snmm.getArray(self.e1)[mask_[4]]*w[4])
             if mask is not None:
-                eSp = np.sum(snmm.getArray(self.e1)[self.selector.mask[3]][mask[3]]*w[3])
-                eSm = np.sum(snmm.getArray(self.e1)[self.selector.mask[4]][mask[4]]*w[4])
+                eSp = np.sum(snmm.getArray(self.e1)[mask_[3]][mask[3]]*w[3])
+                eSm = np.sum(snmm.getArray(self.e1)[mask_[4]][mask[4]]*w[4])
             Rs = esp/ws[3] - esm/ws[4]
         else:
             return 0.
