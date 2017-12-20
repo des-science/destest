@@ -602,11 +602,9 @@ class MetaCalib(Calibrator):
             mask_ = self.selector.mask
 
         if col == self.params['e'][0]:
-            Rs = np.sum(snmm.getArray(self.e1)[snmm.getArray(mask_[1])][mask[1]]*w[1])/ws[1]
-                - np.sum(snmm.getArray(self.e1)[snmm.getArray(mask_[2])][mask[2]]*w[2])/ws[2]
+            Rs = np.sum(snmm.getArray(self.e1)[snmm.getArray(mask_[1])][mask[1]]*w[1])/ws[1] - np.sum(snmm.getArray(self.e1)[snmm.getArray(mask_[2])][mask[2]]*w[2])/ws[2]
         elif col == self.params['e'][1]:
-            Rs = np.sum(snmm.getArray(self.e2)[snmm.getArray(mask_[3])][mask[3]]*w[3])/ws[3]
-                - np.sum(snmm.getArray(self.e2)[snmm.getArray(mask_[4])][mask[4]]*w[4])/ws[4]
+            Rs = np.sum(snmm.getArray(self.e2)[snmm.getArray(mask_[3])][mask[3]]*w[3])/ws[3] - np.sum(snmm.getArray(self.e2)[snmm.getArray(mask_[4])][mask[4]]*w[4])/ws[4]
         else:
             return 0.
 
