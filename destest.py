@@ -421,7 +421,7 @@ class Selector(object):
             # save cache of masks to speed up reruns
             save_obj( [mask, mask_], mask_file )
 
-        self.mask_ = snmm.createArray((len(mask_),), dtype=mask_.dtype)
+        self.mask_ = snmm.createArray((len(mask_),), dtype=np.int64)
         snmm.getArray(self.mask_)[:] = mask_
         mask_ = None
 
@@ -571,16 +571,16 @@ class MetaCalib(Calibrator):
             Rg2 = self.selector.get_col(self.params['Rg'][1],uncut=True)[0]
             e1  = self.selector.get_col(self.params['e'][0],nosheared=True,uncut=True)[0]
             e2  = self.selector.get_col(self.params['e'][1],nosheared=True,uncut=True)[0]
-            self.Rg1 = snmm.createArray((len(Rg1),), dtype=Rg1.dtype)
+            self.Rg1 = snmm.createArray((len(Rg1),), dtype=np.float64)
             snmm.getArray(self.Rg1)[:] = Rg1
             Rg1 = None
-            self.Rg2 = snmm.createArray((len(Rg2),), dtype=Rg1.dtype)
+            self.Rg2 = snmm.createArray((len(Rg2),), dtype=np.float64)
             snmm.getArray(self.Rg2)[:] = Rg2
             Rg2 = None
-            self.e1 = snmm.createArray((len(e1),), dtype=e1.dtype)
+            self.e1 = snmm.createArray((len(e1),), dtype=np.float64)
             snmm.getArray(self.e1)[:] = e1
             e1 = None
-            self.e2 = snmm.createArray((len(e2),), dtype=e2.dtype)
+            self.e2 = snmm.createArray((len(e2),), dtype=np.float64)
             snmm.getArray(self.e2)[:] = e2
             e2 = None
         self.c1 = self.c2 = 0.
