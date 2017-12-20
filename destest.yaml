@@ -11,7 +11,7 @@ output      : .
 # If False, testsuite will terminate if the output directory already exists.
 output_exists : True 
 
-use_mpi       : True
+use_mpi       : False
 
 # Tests to run
 # Calculate general statistics for all columns

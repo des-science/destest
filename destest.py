@@ -282,7 +282,7 @@ class H5Source(SourceParser):
 
         if 'group' in self.params.keys():
 
-            self.hdf = h5py.File(self.params['filename'], mode = 'r+')
+            self.hdf = h5py.File(self.params['filename'], mode = 'r')
             # save all column names
             self.cols = self.hdf[self.params['group']][self.params['table'][0]].keys()
             # save length of tables
@@ -906,17 +906,16 @@ if __name__ == "__main__":
     """
     # pr.enable()
 
-    from mpi_pool import MPIPool
-    comm = MPI.COMM_WORLD
-    pool = MPIPool(comm)
-    if not pool.is_master():
-        sim = None
-        pool.wait()
-        sys.exit(0)
+    # from mpi_pool import MPIPool
+    # comm = MPI.COMM_WORLD
+    # pool = MPIPool(comm)
+    # if not pool.is_master():
+    #     pool.wait()
+    #     sys.exit(0)
 
     Testsuite( sys.argv[1] )
 
-    pool.close()
+    # pool.close()
 
 
     # pr.disable()
