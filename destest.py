@@ -9,7 +9,7 @@ import cProfile, pstats
 import time
 # and maybe a bit optimistic...
 from multiprocessing import Pool
-#from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
+from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
 
 if sys.version_info[0] == 3:
     string_types = str,
@@ -115,6 +115,36 @@ def convert_mcal_to_h5_v2( catdir='/global/project/projectdirs/des/wl/desdata/us
 
     f.close()
 
+def file_path( params, subdir, name, var=None, var2=None, ftype='txt' ):
+    """
+    Set up a file path, and create the path if it doesn't exist.
+    """
+
+    if var is not None:
+        name += '_' + var
+    if var2 is not None:
+        name += '_' + var2
+    name += '.' + ftype
+
+    fpath = os.path.join(params['output'],params['param_file'][:params['param_file'].index('.')],subdir)
+
+    if os.path.exists(fpath):
+        if not params['output_exists']:
+            raise IOError('Output directory already exists. Set output_exists to True to use existing output directory at your own peril.')
+    else:
+        os.mkdir(fpath)
+        params['output_exists'] = True
+
+    return os.path.join(fpath,name)
+
+
+def write_table( params, table, subdir, name, var=None, var2=None):
+    """
+    Save a text table to file. Table must be a numpy-compatible array.
+    """
+
+    fpath = file_path(params,subdir,name,var=var,var2=var2)
+    np.savetxt(fpath,table)
 
 
 class Testsuite(object):
@@ -122,20 +152,20 @@ class Testsuite(object):
     Testsuite manager class. Initiated with a yaml file path or dictionary that contains necessary settings and instructions.
     """
 
-    def __init__( self, param_file ):
+    def __init__( self, param_file, selector = None, calibrator = None, **kwargs ):
 
         # Read in yaml information
         if isinstance(param_file, string_types):
 
             self.params     = yaml.load(open(param_file))
-            self.param_file = param_file
+            self.params['param_file'] = param_file
+            # Archive yaml file used for results
+            self.save_input_yaml()
 
         else:
 
             self.params     = param_file
 
-        # Archive yaml file used for results
-        self.save_input_yaml()
 
         # Set up classes that manage data
         # Source is an HDF5 file.
@@ -153,60 +183,48 @@ class Testsuite(object):
         else:
             raise NameError('Something went wrong with parsing your source.')
 
-        self.selector    = Selector(self.params,self,self.source)
-
-        if self.params['cal_type'] == None:
-            self.calibrator = NoCalib(self.params,self.selector)
-        elif self.params['cal_type'] == 'mcal':
-            self.calibrator = MetaCalib(self.params,self.selector)
-        elif self.params['cal_type'] == 'classic':
-            self.calibrator = ClassCalib(self.params,self.selector)
+        if selector is None:
+            self.selector    = Selector(self.params,self.source)
         else:
-            raise NameError('Something went wrong with parsing your calibration type.')
+            self.selector    = selector
+
+        if calibrator is None:
+            if self.params['cal_type'] == None:
+                self.calibrator = NoCalib(self.params,self.selector)
+            elif self.params['cal_type'] == 'mcal':
+                self.calibrator = MetaCalib(self.params,self.selector)
+            elif self.params['cal_type'] == 'classic':
+                self.calibrator = ClassCalib(self.params,self.selector)
+            else:
+                raise NameError('Something went wrong with parsing your calibration type.')
+        else:
+            self.calibrator = calibrator
 
         # Run tests
         if 'split_mean' in self.params:
-            LinearSplit(self.params,self,self.selector,self.calibrator,self.source,self.params['split_x'],self.params['split_mean'])
 
-    def file_path( self, subdir, name, var=None, var2=None, ftype='txt' ):
-        """
-        Set up a file path, and create the path if it doesn't exist.
-        """
+            if self.params['use_mpi']:
+                procs = comm.Get_size()
+                iter_list = [self.params['split_x'][i::procs] for i in xrange(procs)]
+                calcs = []
+                for proc in range(procs):
+                    if iter_list[proc] == []:
+                        continue
+                    calcs.append((self.params,self.selector,self.calibrator,self.source,iter_list[proc],self.params['split_mean']))
+                pool.map(LinearSplit, calcs)
+            else:
+                LinearSplit(self.params,self.selector,self.calibrator,self.source,self.params['split_x'],self.params['split_mean'])
 
-        if var is not None:
-            name += '_' + var
-        if var2 is not None:
-            name += '_' + var2
-        name += '.' + ftype
-
-        fpath = os.path.join(self.params['output'],self.param_file[:self.param_file.index('.')],subdir)
-
-        if os.path.exists(fpath):
-            if not self.params['output_exists']:
-                raise IOError('Output directory already exists. Set output_exists to True to use existing output directory at your own peril.')
-        else:
-            os.mkdir(fpath)
-            self.params['output_exists'] = True
-
-        return os.path.join(fpath,name)
 
     def save_input_yaml( self ):
         """
         Arxiv input yaml settings.
         """
 
-        fpath = self.file_path('',self.param_file[:self.param_file.index('.')],ftype='yaml')
+        fpath = file_path(self.params,'',self.params['param_file'][:self.params['param_file'].index('.')],ftype='yaml')
         print 'saving input yaml to: '+fpath
         with open(fpath, 'w') as outfile:
             yaml.dump(self.params, outfile, default_flow_style=False)
-
-    def write_table( self, table, subdir, name, var=None, var2=None):
-        """
-        Save a text table to file. Table must be a numpy-compatible array.
-        """
-
-        fpath = self.file_path(subdir,name,var=var,var2=var2)
-        np.savetxt(fpath,table)
 
 
 class SourceParser(object):
@@ -350,11 +368,9 @@ class Selector(object):
     Initiation will parse the 'select_cols' conditions in the yaml file and create a limiting mask 'mask_', ie, an 'or' of the individual unsheared and sheared metacal masks. The individual masks (list of 1 or 5 masks) are 'mask'.
     """
 
-    def __init__( self, params, testsuite, source ):
+    def __init__( self, params, source ):
         self.params    = params
-        self.testsuite = testsuite
         self.source    = source
-        self.mask      = None
         self.build_limiting_mask()
 
     def build_limiting_mask( self ):
@@ -363,38 +379,49 @@ class Selector(object):
         """
 
         # Setup mask file cache path.
-        mask_file = self.testsuite.file_path('cache','mask',ftype='pickle')
+        mask_file = file_path(self.params,'cache','mask',ftype='pickle')
         if self.params['load_cache']:
             # if mask cache exists, read mask from pickle and skip parsing yaml selection conditions.
 
             if os.path.exists(mask_file):
-                self.mask, self.mask_ = load_obj(mask_file)
+                mask, mask_ = load_obj(mask_file)
 
-        if self.mask is None:
+        if mask is None:
             # mask cache doesn't exist, or you chose to ignore it, so masks are built from yaml selection conditions
             # set up 'empty' mask
-            self.mask = [np.ones(self.source.size, dtype=bool)]
+            mask = [np.ones(self.source.size, dtype=bool)]
             if self.params['cal_type']=='mcal':
-                self.mask = self.mask * 5
+                mask = mask * 5
 
             # For each of 'select_cols' in yaml file, read in the data and iteratively apply the appropriate mask
             for i,select_col in enumerate(self.params['select_cols']):
                 cols = self.source.read(col=select_col)
                 for j,col in enumerate(cols):
-                    self.mask[j] = self.mask[j] & eval(self.params['select_exp'][i])
+                    mask[j] = mask[j] & eval(self.params['select_exp'][i])
 
             # Loop over unsheared and sheared mask arrays and build limiting mask
-            self.mask_ = np.zeros(self.source.size, dtype=bool)
-            for mask_ in self.mask:
-                self.mask_ = self.mask_ | mask_
+            mask_ = np.zeros(self.source.size, dtype=bool)
+            for imask in mask:
+                mask_ = mask_ | imask
 
             # Cut down masks to the limiting mask
             # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
-            for i in range(len(self.mask)):
-                self.mask[i] = self.mask[i][self.mask_]
+            for i in range(len(mask)):
+                mask[i] = mask[i][mask_]
+            mask_ = np.where(mask_)[0]
 
             # save cache of masks to speed up reruns
-            save_obj( [self.mask, self.mask_], mask_file )
+            save_obj( [mask, mask_], mask_file )
+
+        self.mask_ = snmm.createArray((len(mask_),), dtype=mask_.dtype)
+        snmm.getArray(self.mask_)[:] = mask_
+        mask_ = None
+
+        self.mask = []
+        for i in range(len(mask)):
+            self.mask.append( snmm.createArray((len(mask[i]),), dtype=np.bool) )
+            snmm.getArray(self.mask[i])[:] = mask[i]
+            mask[i] = None
 
     def get_col( self, col, nosheared=False, uncut=False ):
         """
@@ -406,12 +433,12 @@ class Selector(object):
 
         # trim and return
         for i in range(len(x)):
-            x[i] = x[i][self.mask_]
+            x[i] = x[i][snmm.getArray(self.mask_)]
         if uncut:
             return x
 
         for i in range(len(x)):
-            x[i] = x[i][self.mask[i]]
+            x[i] = x[i][snmm.getArray(self.mask[i])]
         return x
 
     def get_masked( self, x, mask ):
@@ -426,27 +453,19 @@ class Selector(object):
             if np.isscalar(x):
                 return x
             else:
-                return x[self.mask[0][mask[0]]]
+                return x[snmm.getArray(self.mask[0])[mask[0]]]
 
         if np.isscalar(x[0]):
             return x
 
-        return [ x_[self.mask[i]][mask[i]] for i,x_ in enumerate(x) ]
+        return [ x_[snmm.getArray(self.mask[i])][mask[i]] for i,x_ in enumerate(x) ]
 
     def get_mask( self, mask ):
         """
         Same as get_masked, but only return the mask.
         """
 
-        if type(mask) is not list:
-            return self.mask[mask]
-
-        return [ self.mask[i][mask_] for i,mask_ in enumerate(mask) ]
-
-    def reset( self ):
-
-        self.mask = None
-        self.build_limiting_mask()
+        return [ snmm.getArray(self.mask[i])[mask_] for i,mask_ in enumerate(mask) ]
 
 
 class Calibrator(object):
@@ -492,13 +511,13 @@ class Calibrator(object):
 
         # Check if an ellipticity - if so, return real calibration factors
         if col == self.params['e'][0]:
-            Rg1 = self.selector.get_masked(self.Rg1,mask)[0]
+            Rg1 = self.selector.get_masked(snmm.getArray(self.Rg1),mask)[0]
             R = np.sum(Rg1*w[0])/ws
             R += Rs
             c = self.selector.get_masked(self.c1,mask)
             return R,c,w_
         elif col == self.params['e'][1]:
-            Rg2 = self.selector.get_masked(self.Rg2,mask)[0]
+            Rg2 = self.selector.get_masked(snmm.getArray(self.Rg2),mask)[0]
             R = np.sum(Rg2*w[0])/ws
             R += Rs
             c = self.selector.get_masked(self.c2,mask)
@@ -540,10 +559,22 @@ class MetaCalib(Calibrator):
 
         self.Rg1 = self.Rg2 = 1.
         if 'Rg' in self.params:
-            self.Rg1 = self.selector.get_col(self.params['Rg'][0],uncut=True)
-            self.Rg2 = self.selector.get_col(self.params['Rg'][1],uncut=True)
-            self.e1  = self.selector.get_col(self.params['e'][0],nosheared=True,uncut=True)
-            self.e2  = self.selector.get_col(self.params['e'][1],nosheared=True,uncut=True)
+            Rg1 = self.selector.get_col(self.params['Rg'][0],uncut=True)[0]
+            Rg2 = self.selector.get_col(self.params['Rg'][1],uncut=True)[0]
+            e1  = self.selector.get_col(self.params['e'][0],nosheared=True,uncut=True)[0]
+            e2  = self.selector.get_col(self.params['e'][1],nosheared=True,uncut=True)[0]
+            self.Rg1 = snmm.createArray((len(Rg1),), dtype=Rg1.dtype)
+            snmm.getArray(self.Rg1)[:] = Rg1
+            Rg1 = None
+            self.Rg2 = snmm.createArray((len(Rg2),), dtype=Rg1.dtype)
+            snmm.getArray(self.Rg2)[:] = Rg2
+            Rg2 = None
+            self.e1 = snmm.createArray((len(e1),), dtype=e1.dtype)
+            snmm.getArray(self.e1)[:] = e1
+            e1 = None
+            self.e2 = snmm.createArray((len(e2),), dtype=e2.dtype)
+            snmm.getArray(self.e2)[:] = e2
+            e2 = None
         self.c1 = self.c2 = 0.
         if 'c' in self.params:
             self.c1 = self.selector.get_col(self.params['c'][0],uncut=True)
@@ -564,9 +595,11 @@ class MetaCalib(Calibrator):
             mask_ = self.selector.mask
 
         if col == self.params['e'][0]:
-            Rs = np.sum(self.e1[0][mask_[1]][mask[1]]*w[1])/ws[1]-np.sum(self.e1[0][mask_[2]][mask[2]]*w[2])/ws[2]
+            Rs = np.sum(snmm.getArray(self.e1)[snmm.getArray(mask_[1])][mask[1]]*w[1])/ws[1]
+                - np.sum(snmm.getArray(self.e1)[snmm.getArray(mask_[2])][mask[2]]*w[2])/ws[2]
         elif col == self.params['e'][1]:
-            Rs = np.sum(self.e2[0][mask_[3]][mask[3]]*w[3])/ws[3]-np.sum(self.e2[0][mask_[4]][mask[4]]*w[4])/ws[4]
+            Rs = np.sum(snmm.getArray(self.e2)[snmm.getArray(mask_[3])][mask[3]]*w[3])/ws[3]
+                - np.sum(snmm.getArray(self.e2)[snmm.getArray(mask_[4])][mask[4]]*w[4])/ws[4]
         else:
             return 0.
 
@@ -605,13 +638,12 @@ class Splitter(object):
     Initiate with a testsuite object.
     """
 
-    def __init__( self, params, testsuite, selector, calibrator, source, nbins = None ):
+    def __init__( self, params, selector, calibrator, source, nbins = None ):
 
         self.params     = params
         self.selector   = selector
         self.calibrator = calibrator
         self.source     = source
-        self.testsuite  = testsuite
         self.bins       = self.params['linear_bins']
         self.x          = None
         self.y          = None
@@ -694,7 +726,7 @@ class Splitter(object):
         """
 
         # Check if cache file exists and use it if you've requested that.
-        sort_file = self.testsuite.file_path('cache','sort',var=col,ftype='pickle')
+        sort_file = file_path(self.params,'cache','sort',var=col,ftype='pickle')
         if self.params['load_cache']:
             print 'loading split sort cache',sort_file
 
@@ -757,7 +789,7 @@ class LinearSplit(object):
     Instantiate with a testsuite object and opetionally a function to operate on the bins (not fully implemented).
     """
 
-    def __init__( self, params, testsuite, selector, calibrator, source, split_x, split_y, nbins = None, func=np.mean, **kwargs ):
+    def __init__( self, params, selector, calibrator, source, split_x, split_y, nbins = None, func=np.mean, **kwargs ):
 
         self.params = params
         self.source = source
@@ -768,9 +800,8 @@ class LinearSplit(object):
         else:
             self.params['split_mean'] = self.source.cols
 
-        self.testsuite  = testsuite
         self.calibrator = calibrator
-        self.splitter   = Splitter(params,testsuite,selector,calibrator,source,nbins)
+        self.splitter   = Splitter(params,selector,calibrator,source,nbins)
         self.split_x    = split_x
         self.split_y    = split_y
         self.step       = 0
@@ -805,7 +836,7 @@ class LinearSplit(object):
                 # Save results
                 table = np.array([xmean,ymean,ystd]).T
                 print 'mean',table
-                self.testsuite.write_table(table,'test_output','linear_split',var=x,var2=y)
+                write_table(self.params, table,'test_output','linear_split',var=x,var2=y)
 
     def mean( self, col, x, mask=None, return_std=True, return_rms=False ):
         """
@@ -852,17 +883,27 @@ class LinearSplit(object):
 
         return mean,std,rms
 
-pr = cProfile.Profile()
+# pr = cProfile.Profile()
 
 if __name__ == "__main__":
     """
     """
-    t0 = time.time()
-    pr.enable()
+    # pr.enable()
+
+    from mpi_pool import MPIPool
+    comm = mpi4py.MPI.COMM_WORLD
+    pool = MPIPool(comm)
+    if not pool.is_master():
+        sim = None
+        pool.wait()
+        sys.exit(0)
 
     Testsuite( sys.argv[1] )
 
-    pr.disable()
-    ps = pstats.Stats(pr).sort_stats('time')
-    ps.print_stats(20)
+    pool.close()
+
+
+    # pr.disable()
+    # ps = pstats.Stats(pr).sort_stats('time')
+    # ps.print_stats(20)
 
