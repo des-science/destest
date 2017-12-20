@@ -490,7 +490,7 @@ class Selector(object):
         Same as get_masked, but only return the mask.
         """
 
-        return [ np.where(snmm.getArray(self.mask[i]))[0]&[mask_] for i,mask_ in enumerate(mask) ]
+        return [ np.where(snmm.getArray(self.mask[i]))[0][mask_] for i,mask_ in enumerate(mask) ]
 
 
 class Calibrator(object):
@@ -514,39 +514,37 @@ class Calibrator(object):
         ws = [ scalar_sum(w_,len(mask[i])) for i,w_ in enumerate(w)]
         return w,ws
 
-    def calibrate(self,col,mask=[np.s_[:]]*5,return_full_w=False,weight_only=False,include_Rg=False):
+    def calibrate(self,col,mask=[np.s_[:]]*5,return_full_w=False,weight_only=False):
         """
         Return the calibration factor and weights, given potentially an ellipticity and selection.
         """
 
+        mask_ = self.selector.get_mask(mask)
         # Get the weights
-        w,ws = self.get_w(mask)
+        w,ws = self.get_w(mask_)
         if return_full_w:
             w_ = w
         else:
             w_ = w[0]
         if weight_only:
-            if include_Rg:
-                return w_,(self.selector.get_masked(self.Rg1,mask)+self.selector.get_masked(self.Rg2,mask))[0]/2.
-            else:
-                return w_
+            return w_
 
         # Get a selection response
-        Rs = self.select_resp(col,mask,w,ws)
+        Rs = self.select_resp(col,mask_,w,ws)
 
         # Check if an ellipticity - if so, return real calibration factors
         if col == self.params['e'][0]:
-            Rg1 = self.selector.get_masked(snmm.getArray(self.Rg1),mask)[0]
+            Rg1 = self.selector.get_masked(snmm.getArray(self.Rg1),mask_)[0]
             R = np.sum(Rg1*w[0])/ws[0]
             print 'R',R,np.sum(Rg1*w[0]),ws[0],np.mean(Rg1)
             R += Rs
-            c = self.selector.get_masked(self.c1,mask)
+            c = self.selector.get_masked(self.c1,mask_)
             return R,c,w_
         elif col == self.params['e'][1]:
-            Rg2 = self.selector.get_masked(snmm.getArray(self.Rg2),mask)[0]
+            Rg2 = self.selector.get_masked(snmm.getArray(self.Rg2),mask_)[0]
             R = np.sum(Rg2*w[0])/ws[0]
             R += Rs
-            c = self.selector.get_masked(self.c2,mask)
+            c = self.selector.get_masked(self.c2,mask_)
             return R,c,w_
         else:
             return None,None,w_
