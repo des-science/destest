@@ -677,9 +677,10 @@ class Splitter(object):
         # print 'returning y bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))]
         print 'get_y',mask,start,end,self.edges
+        mask      = [ order_[mask_] for order_,mask_ in tuple(zip(self.order,mask)) ]
         if return_mask:
-            return self.selector.get_masked(self.y,self.order[mask]),self.order[mask]
-        return self.selector.get_masked(self.y,self.order[mask])
+            return self.selector.get_masked(self.y,mask),mask
+        return self.selector.get_masked(self.y,mask)
 
     def split( self, col ):
         """
