@@ -877,7 +877,7 @@ class LinearSplit(object):
             R,c,w = self.calibrator.calibrate(col)
         else:
             R,c,w = self.calibrator.calibrate(col,mask=mask)
-        print R,c,w
+        print 'Rcw',col,R,c,w
 
         # do the calculation
         if R is not None:

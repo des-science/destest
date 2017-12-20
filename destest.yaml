@@ -17,8 +17,8 @@ use_mpi       : False
 # Calculate general statistics for all columns
 general_stats : 
 # Do linear mean value splits by 'x' column list
-split_mean    : ['e1','e2','flux_r']
-split_x       : ['snr','psf_e1','psf_e2','size']
+split_mean    : ['e1'] #,'e2','flux_r']
+split_x       : ['snr'] #,'psf_e1','psf_e2','size']
 split_by_w    : False
 
 
