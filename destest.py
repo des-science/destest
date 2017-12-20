@@ -623,7 +623,7 @@ class MetaCalib(Calibrator):
                 print snmm.getArray(self.e1),self.selector.mask,w,snmm.getArray(self.e1)[self.selector.mask[1]],mask
                 eSp = np.sum(snmm.getArray(self.e1)[mask_[1]][mask[1]]*w[1])
                 eSm = np.sum(snmm.getArray(self.e1)[mask_[2]][mask[2]]*w[2])
-            Rs = esp/ws[1] - esm/ws[2]
+            Rs = eSp/ws[1] - eSm/ws[2]
         elif col == self.params['e'][1]:
             eSp = np.sum(snmm.getArray(self.e1)[mask_[3]]*w[3])
             eSm = np.sum(snmm.getArray(self.e1)[mask_[4]]*w[4])
