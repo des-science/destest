@@ -646,7 +646,7 @@ class Splitter(object):
             return
 
         # If asking for a bin selection, find the appropriate mask and return that part of the x array.
-        start,end = self.get_bin_edges(xbin,nosheared=True)
+        start,end = self.get_bin_edges(xbin)
         # print 'returning x bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))] # np.s_ creates an array slice 'object' that can be passed to functions
         mask      = [ order_[mask_] for order_,mask_ in tuple(zip(self.order,mask)) ]
