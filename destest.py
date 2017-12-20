@@ -546,10 +546,14 @@ class MetaCalib(Calibrator):
 
         # if an ellipticity column, calculate and return the selection response and weight
         if col == self.params['e'][0]:
+            if len(mask)==1: # exit for non-sheared column selections
+                return 0.
             mask_ = self.selector.get_mask(mask)
             print mask_
             Rs = np.sum(e[0][mask_[1]]*w[1])/ws[1]-np.sum(e[0][mask_[2]]*w[2])/ws[2]
         elif col == self.params['e'][1]:
+            if len(mask)==1: # exit for non-sheared column selections
+                return 0.
             mask_ = self.selector.get_mask(mask)
             Rs = np.sum(e[0][mask_[3]]*w[3])/ws[3]-np.sum(e[0][mask_[4]]*w[4])/ws[4]
         else:
