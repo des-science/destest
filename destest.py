@@ -354,6 +354,7 @@ class Selector(object):
         self.params    = params
         self.testsuite = testsuite
         self.source    = source
+        self.mask      = None
         self.build_limiting_mask()
 
     def build_limiting_mask( self ):
@@ -369,7 +370,7 @@ class Selector(object):
             if os.path.exists(mask_file):
                 self.mask, self.mask_ = load_obj(mask_file)
 
-        if not hasattr(self,'mask'):
+        if self.mask is None:
             # mask cache doesn't exist, or you chose to ignore it, so masks are built from yaml selection conditions
             # set up 'empty' mask
             self.mask = [np.ones(self.source.size, dtype=bool)]
@@ -436,6 +437,11 @@ class Selector(object):
             return self.mask[mask]
 
         return [ self.mask[i][mask_] for i,mask_ in enumerate(mask) ]
+
+    def reset( self ):
+
+        self.mask = None
+        self.build_limiting_mask()
 
 
 class Calibrator(object):
@@ -642,8 +648,8 @@ class Splitter(object):
         # print 'returning x bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))] # np.s_ creates an array slice 'object' that can be passed to functions
         if return_mask:
-            return self.selector.get_masked(self.x,mask),mask
-        return self.selector.get_masked(self.x,mask)
+            return self.selector.get_masked(self.x,self.order[mask]),self.order[mask]
+        return self.selector.get_masked(self.x,self.order[mask])
 
     def get_y( self, col, xbin=None, return_mask=False ):
         """
@@ -672,8 +678,8 @@ class Splitter(object):
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))]
         print 'get_y',mask,start,end,self.edges
         if return_mask:
-            return self.selector.get_masked(self.y,mask),mask
-        return self.selector.get_masked(self.y,mask)
+            return self.selector.get_masked(self.y,self.order[mask]),self.order[mask]
+        return self.selector.get_masked(self.y,self.order[mask])
 
     def split( self, col ):
         """
