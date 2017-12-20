@@ -201,6 +201,7 @@ class Testsuite(object):
             self.selector    = Selector(self.params,self.source)
         else:
             self.selector    = selector
+            self.selector.build_source(self.source)
 
         if calibrator is None:
             if self.params['cal_type'] == None:
@@ -226,6 +227,7 @@ class Testsuite(object):
                         continue
                     params = self.params.copy()
                     params['split_x'] = iter_list[proc]
+                    self.selector.kill_source()
                     calcs.append((params,self.selector,self.calibrator))
                 pool.map(child_testsuite, calcs)
             else:
@@ -390,6 +392,12 @@ class Selector(object):
         self.params    = params
         self.source    = source
         self.build_limiting_mask()
+
+    def kill_source( self ):
+        self.source = None
+
+    def build_source ( self, source ):
+        self.source = source
 
     def build_limiting_mask( self ):
         """
