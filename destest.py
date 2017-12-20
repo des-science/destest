@@ -422,11 +422,14 @@ class Selector(object):
             for imask in mask:
                 mask_ = mask_ | imask
 
+            print len(mask_),np.sum(mask_)
+
             # Cut down masks to the limiting mask
             # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
             for i in range(len(mask)):
                 mask[i] = mask[i][mask_]
             mask_ = np.where(mask_)[0]
+            print len(mask_),len(mask[0]),np.sum(mask[0])
 
             # save cache of masks to speed up reruns
             save_obj( [mask, mask_], mask_file )
@@ -453,10 +456,12 @@ class Selector(object):
         for i in range(len(x)):
             x[i] = x[i][snmm.getArray(self.mask_)]
         if uncut:
+            print 'uncut',len(x)
             return x
 
         for i in range(len(x)):
             x[i] = x[i][snmm.getArray(self.mask[i])]
+            print 'cut',len(x)
         return x
 
     def get_masked( self, x, mask ):
