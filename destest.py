@@ -913,12 +913,12 @@ class LinearSplit(object):
 
         return mean,std,rms
 
-# pr = cProfile.Profile()
+pr = cProfile.Profile()
 
 if __name__ == "__main__":
     """
     """
-    # pr.enable()
+    pr.enable()
 
     # from mpi_pool import MPIPool
     # comm = MPI.COMM_WORLD
@@ -932,7 +932,7 @@ if __name__ == "__main__":
     # pool.close()
 
 
-    # pr.disable()
-    # ps = pstats.Stats(pr).sort_stats('time')
-    # ps.print_stats(20)
+    pr.disable()
+    ps = pstats.Stats(pr).sort_stats('time')
+    ps.print_stats(20)
 
