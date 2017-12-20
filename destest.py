@@ -470,7 +470,7 @@ class Calibrator(object):
         ws = [np.sum(w_) for w_ in w]
         return w,ws
 
-    def calibrate(self,col,mask=[np.s_[:]]*5,return_full_w=False,weight_only=False):
+    def calibrate(self,col,mask=[np.s_[:]]*5,return_full_w=False,weight_only=False,include_Rg=False):
         """
         Return the calibration factor and weights, given potentially an ellipticity and selection.
         """
@@ -482,7 +482,10 @@ class Calibrator(object):
         else:
             w_ = w[0]
         if weight_only:
-            return w_
+            if include_Rg:
+                return w_,(self.Rg1+self.Rg2)/2.
+            else:
+                return w_
 
         # Get a selection response
         Rs = self.select_resp(col,mask,w,ws)
@@ -724,16 +727,20 @@ class Splitter(object):
 
         self.edges = []
         # You've provided a number of bins. Get the weights and define bin edges such that there exists equal weight in each bin.
-        w = self.calibrator.calibrate(self.xcol,return_full_w=True,weight_only=True)
-        for x_,w_ in tuple(zip(self.x,w)):
-            # min_ = np.min(x_)
-            # if min_<0.:
-            #     xw = (x_-min_)*w_
-            # else:
-            #     xw = (x_)*w_
-            xw = np.ones(len(x_))*w_
-            normcumsum = xw.cumsum() / xw.sum()
-            self.edges.append( np.searchsorted(normcumsum, np.linspace(0, 1, self.bins+1, endpoint=True)) )
+        if not self.params['split_by_w']:
+
+            for x_ in self.x:
+                xw = np.ones(len(x_))
+                normcumsum = xw.cumsum() / xw.sum()
+                self.edges.append( np.searchsorted(normcumsum, np.linspace(0, 1, self.bins+1, endpoint=True)) )
+
+        else:
+
+            w,R = self.calibrator.calibrate(self.xcol,return_full_w=True,weight_only=True,include_Rg=True)
+            for x_,w_ in tuple(zip(self.x,w)):
+                xw = w_*R
+                normcumsum = xw.cumsum() / xw.sum()
+                self.edges.append( np.searchsorted(normcumsum, np.linspace(0, 1, self.bins+1, endpoint=True)) )
 
         return
 
