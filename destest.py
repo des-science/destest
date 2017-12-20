@@ -533,11 +533,13 @@ class Calibrator(object):
 
         # Get a selection response
         Rs = self.select_resp(col,mask,w,ws)
+        print 'Rs',Rs
 
         # Check if an ellipticity - if so, return real calibration factors
         if col == self.params['e'][0]:
             Rg1 = self.selector.get_masked(snmm.getArray(self.Rg1),mask)[0]
             R = np.sum(Rg1*w[0])/ws
+            print 'R',R
             R += Rs
             c = self.selector.get_masked(self.c1,mask)
             return R,c,w_
