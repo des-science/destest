@@ -915,7 +915,7 @@ class LinearSplit(object):
                 data = np.loadtxt(fpath)
                 plt.figure()
                 if x in self.params['plot_log_x']:
-                    data[data[:,2]<0,2] = np.log(-data[data[:,2]<0,2])
+                    data[data[:,2]<0,2] = -np.log(-data[data[:,2]<0,2])
                     data[data[:,2]>0,2] = np.log(-data[data[:,2]>0,2])
                 plt.errorbar(data[:,2],data[:,4],yerr=data[:,5],marker='.',linestyle='',color='b')
                 plt.minorticks_on()
@@ -1030,7 +1030,7 @@ class Hist1D(object):
             bins = np.loadtxt(fpath)
             plt.figure()
             if x in self.params['plot_log_x']:
-                edges[edges<0] = np.log(-edges[eges<0])
+                edges[edges<0] = -np.log(-edges[eges<0])
                 edges[edges>0] = np.log(edges[eges>0])
             plt.plot(edges[:-1],bins,marker='',linestyle='-',color='b',drawstyle='steps-pre',fillstyle='bottom')
             plt.minorticks_on()
