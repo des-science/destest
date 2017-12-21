@@ -1020,7 +1020,7 @@ class Hist2D(object):
             for y in self.split:
                 if x==y:
                     continue
-                print 'x col',x
+                print 'y col',y
                 self.splitter.get_y(y)
                 bins,xedges,yedges = np.histogram2d(self.splitter.x,self.splitter.y,bins=self.params['hist_bins'])
 
