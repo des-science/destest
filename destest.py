@@ -909,6 +909,8 @@ class LinearSplit(object):
 
         for x in self.split_x:
             for y in self.split_y:
+                if x==y:
+                    continue
                 fpath = file_path(self.params,'test_output','linear_split',var=x,var2=y,var3=str(self.splitter.bins))
                 data = np.loadtxt(fpath)
                 plt.figure()
