@@ -924,6 +924,7 @@ class GeneralStats(object):
 
         fpath = file_path( self.params,'test_output','general_stats' )
         with open(fpath,'w') as f:
+            f.write('col min max mean std rms\n')
             for i,x in enumerate(self.split):
                 print 'x col',x
                 # get x array in bin xbin
@@ -970,7 +971,7 @@ class Hist1D(object):
             print 'x col',x
             # get x array in bin xbin
             self.splitter.get_x(x)
-            bins,edges = np.histogram(self.splitter.x,bins=self.params.hist_bins)
+            bins,edges = np.histogram(self.splitter.x,bins=self.params['hist_bins'])
             # bins  = []
             # edges = np.linspace(self.splitter.x[0], self.splitter.x[-1], self.params.hist_bins+1, endpoint=True)
             # self.splitter.get_x(x)
@@ -1021,7 +1022,7 @@ class Hist2D(object):
                     continue
                 print 'x col',x
                 self.splitter.get_y(y)
-                bins,xedges,yedges = np.histogram2D(self.splitter.x,self.splitter.y,bins=self.params.hist_bins)
+                bins,xedges,yedges = np.histogram2D(self.splitter.x,self.splitter.y,bins=self.params['hist_bins'])
 
                 # Save results
                 write_table(self.params, np.array([xedges,yedges]).T,'test_output','hist_2d',var=x,var2=y,var3='edges')
