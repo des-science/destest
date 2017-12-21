@@ -929,7 +929,7 @@ class GeneralStats(object):
                 min_ = xval[0]
                 max_ = xval[-1]
                 # get mean values of x in this bin
-                mean,std,rms = mean(x,xval,self.calibrator,return_std=True,return_rms=True)
+                mean_,std_,rms_ = mean(x,xval,self.calibrator,return_std=True,return_rms=True)
                 # Save results
                 f.write(x+' '+str(min_)+' '+str(max_)+' '+str(mean_)+' '+str(std_)+' '+str(rms_))
         f.close()
