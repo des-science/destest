@@ -141,12 +141,12 @@ def file_path( params, subdir, name, var=None, var2=None, var3=None, ftype='txt'
     return os.path.join(fpath,name)
 
 
-def write_table( params, table, subdir, name, var=None, var2=None):
+def write_table( params, table, subdir, name, var=None, var2=None, var3=var3 ):
     """
     Save a text table to file. Table must be a numpy-compatible array.
     """
 
-    fpath = file_path(params,subdir,name,var=var,var2=var2)
+    fpath = file_path(params,subdir,name,var=var,var2=var2,var3=var3)
     np.savetxt(fpath,table)
 
 
