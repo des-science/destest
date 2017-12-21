@@ -26,7 +26,7 @@ hist_1d       : ['R11', 'R12', 'R21', 'R22', 'covmat_0_0', 'covmat_0_1', 'covmat
 hist_bins     : 500
 
 plot_only     : True
-plot_log_x    : ['covmat_0_0','covmat_0_1','covmat_1_0','covmat_1_1','snr','size','size_ratio','flux_i','flux_r','flux_z','flux_err_i','flux_err_r','flux_err_z','R11','R22','R12','R21']
+plot_log_x    : [] #['covmat_0_0','covmat_0_1','covmat_1_0','covmat_1_1','snr','size','size_ratio','flux_i','flux_r','flux_z','flux_err_i','flux_err_r','flux_err_z','R11','R22','R12','R21']
 
 # Data source
 # calibration type
