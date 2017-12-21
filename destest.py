@@ -561,6 +561,8 @@ class Calibrator(object):
             Rg = self.selector.get_masked(snmm.getArray(self.Rg1),mask)
             c = self.selector.get_masked(self.c2,mask)
 
+        print 'Rg',Rg
+
         if col in self.params['e']:
             
             ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
@@ -662,6 +664,7 @@ class MetaCalib(Calibrator):
             return 0.
 
         Rs /= 2.*self.params['dg']
+        print 'Rs',Rs,Rs*2.*self.params['dg']
 
         return Rs
 
@@ -1097,7 +1100,7 @@ def mean( col, x, calibrator, mask=None, return_std=True, return_rms=False ):
         R,c,w = calibrator.calibrate(col)
     else:
         R,c,w = calibrator.calibrate(col,mask=mask)
-    # print 'Rcw',col,R,c,w
+    print 'Rcw',col,R,c,w
 
     # do the calculation
     if R is not None:
