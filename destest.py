@@ -238,6 +238,11 @@ class Testsuite(object):
             else:
                 LinearSplit(self.params,self.selector,self.calibrator,self.source,self.params['split_x'],self.params['split_mean'])
 
+        if 'hist_1d' in self.params:
+            Hist1D(self.params,self.selector,self.calibrator,self.source,self.params['hist_1d'])
+
+        if 'hist_2d' in self.params:
+            Hist2D(self.params,self.selector,self.calibrator,self.source,self.params['hist_2d'])
 
     def save_input_yaml( self ):
         """
@@ -470,13 +475,11 @@ class Selector(object):
         # trim and return
         for i in range(len(x)):
             x[i] = x[i][snmm.getArray(self.mask_)]
-            print 'uncut',len(x[i])
         if uncut:
             return x
 
         for i in range(len(x)):
             x[i] = x[i][snmm.getArray(self.mask[i])]
-            print 'cut',len(x[i])
         return x
 
     def get_masked( self, x, mask ):
@@ -829,7 +832,6 @@ class Splitter(object):
 class LinearSplit(object):
     """
     Test class to do linear splitting (operations on binned data not at the 2pt level).
-    Instantiate with a testsuite object and opetionally a function to operate on the bins (not fully implemented).
     """
 
     def __init__( self, params, selector, calibrator, source, split_x, split_y, nbins = None, func=np.mean, **kwargs ):
@@ -891,8 +893,7 @@ class LinearSplit(object):
 
 class GeneralStats(object):
     """
-    Test class to do linear splitting (operations on binned data not at the 2pt level).
-    Instantiate with a testsuite object and opetionally a function to operate on the bins (not fully implemented).
+    Test class to calculate general statistics for a list of columns.
     """
 
     def __init__( self, params, selector, calibrator, source, split, func=np.mean, **kwargs ):
@@ -916,23 +917,113 @@ class GeneralStats(object):
 
     def iter( self ):
         """
+        Loop over x columns, perform basic statistics, and save the results
+        """
+
+        fpath = file_path( self.params,'test_output','general_stats' )
+        with open(fpath,'w') as f:
+            for i,x in enumerate(self.split):
+                print 'x col',x
+                # get x array in bin xbin
+                xval = self.splitter.get_x(x,0)
+                min_ = xval[0]
+                max_ = xval[-1]
+                # get mean values of x in this bin
+                mean,std,rms = mean(x,xval,self.calibrator,return_std=True,return_rms=True)
+                # Save results
+                f.write(x+' '+str(min_)+' '+str(max_)+' '+str(mean_)+' '+str(std_)+' '+str(rms_))
+        f.close()
+
+
+class Hist1D(object):
+    """
+    Test class to do linear 1D histograms on a set of columns.
+    """
+
+    def __init__( self, params, selector, calibrator, source, split, func=np.mean, **kwargs ):
+
+        self.params = params
+        self.source = source
+        if self.params['hist_1d'] is not None:
+            for col in self.params['hist_1d']:
+                if col not in self.source.cols:
+                    raise NameError(col + ' not in source.')
+        else:
+            self.params['hist_1d'] = self.source.cols
+
+        self.calibrator = calibrator
+        self.splitter   = Splitter(params,selector,calibrator,source,nbins=1)
+        self.split      = split
+        self.step       = 0
+
+        # 'step' and this separate call is meant as a placeholder for potential parallelisation
+        self.iter()
+
+    def iter( self ):
+        """
         Loop over x columns (quantities binned by) and y columns (quantities to perform operations on in bins of x), perform the operations, and save the results
         """
 
-        table = np.empty(len(self.split),dtype=[('col',str)]+[('min',float)]+[('max',float)]+[('mean',float)]+[('std',float)]+[('rms',float)])
         for i,x in enumerate(self.split):
             print 'x col',x
             # get x array in bin xbin
-            table['col'][i] = x
-            xval = self.splitter.get_x(x,0)
-            table['min'][i] = xval[0]
-            table['max'][i] = xval[-1]
-            # get mean values of x in this bin
-            table['mean'][i],table['std'][i],table['rms'][i] = mean(x,xval,self.calibrator,return_std=True,return_rms=True)
+            self.splitter.get_x(x)
+            bins,edges = np.histogram(self.splitter.x,bins=self.params.hist_bins)
+            # bins  = []
+            # edges = np.linspace(self.splitter.x[0], self.splitter.x[-1], self.params.hist_bins+1, endpoint=True)
+            # self.splitter.get_x(x)
+            # for xbin in range(self.params.hist_bins):
+            #     np.searchsorted(self.splitter.x,edges)
+            #     bins.append( self.splitter.edges )
+            #     edges.append( self.splitter.x )
 
-        # Save results
-        print 'mean',table
-        write_table(self.params, table,'test_output','general_stats',var=x)
+            # Save results
+            write_table(self.params, edges,'test_output','hist_1d',var=x,var2='edges')
+            write_table(self.params, bins, 'test_output','hist_1d',var=x,var2='bins' )
+
+class Hist2D(object):
+    """
+    Test class to do linear 1D histograms on a set of columns.
+    """
+
+    def __init__( self, params, selector, calibrator, source, split, func=np.mean, **kwargs ):
+
+        self.params = params
+        self.source = source
+        if self.params['hist_2d'] is not None:
+            for col in self.params['hist_2d']:
+                if col not in self.source.cols:
+                    raise NameError(col + ' not in source.')
+        else:
+            self.params['hist_2d'] = self.source.cols
+
+        self.calibrator = calibrator
+        self.splitter   = Splitter(params,selector,calibrator,source,nbins=1)
+        self.split      = split
+        self.step       = 0
+
+        # 'step' and this separate call is meant as a placeholder for potential parallelisation
+        self.iter()
+
+    def iter( self ):
+        """
+        Loop over x columns (quantities binned by) and y columns (quantities to perform operations on in bins of x), perform the operations, and save the results
+        """
+
+        for x in self.split:
+            print 'x col',x
+            # get x array in bin xbin
+            self.splitter.get_x(x)
+            for y in self.split:
+                if x==y:
+                    continue
+                print 'x col',x
+                self.splitter.get_y(y)
+                bins,xedges,yedges = np.histogram2D(self.splitter.x,self.splitter.y,bins=self.params.hist_bins)
+
+                # Save results
+                write_table(self.params, np.array([xedges,yedges]).T,'test_output','hist_2d',var=x,var2=y,var3='edges')
+                write_table(self.params, bins, 'test_output','hist_2d',var=x,var2=y,var3='bins' )
 
 
 def mean( col, x, calibrator, mask=None, return_std=True, return_rms=False ):
