@@ -25,6 +25,8 @@ split_by_w    : False
 #hist_2d       : ['R11', 'R12', 'R21', 'R22', 'covmat_0_0', 'covmat_0_1', 'covmat_1_1', 'e1', 'e2', 'flux_err_i', 'flux_err_r', 'flux_err_z', 'flux_i', 'flux_r', 'flux_z', 'mask_frac', 'psf_e1', 'psf_e2', 'psf_size', 'size', 'size_err', 'size_ratio', 'snr']
 hist_bins     : 500
 
+plot_only     : True
+
 # Data source
 # calibration type
 cal_type   : 'mcal'

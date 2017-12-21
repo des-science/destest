@@ -2,15 +2,25 @@ import numpy as np
 import fitsio as fio
 import h5py
 import cPickle as pickle
+import yaml
 import os
 import sys
-import yaml
-import cProfile, pstats
 import time
+import cProfile, pstats
 # and maybe a bit optimistic...
 from multiprocessing import Pool
 # from mpi4py import MPI
 from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
+
+import matplotlib
+matplotlib.use ('agg')
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+from matplotlib.colors import LogNorm
+import matplotlib.gridspec as gridspec
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+import pylab
+
 
 if sys.version_info[0] == 3:
     string_types = str,
@@ -222,7 +232,8 @@ class Testsuite(object):
             GeneralStats(self.params,self.selector,self.calibrator,self.source,self.params['general_stats'])
 
         if 'hist_1d' in self.params:
-            Hist1D(self.params,self.selector,self.calibrator,self.source,self.params['hist_1d'])
+            test = Hist1D(self.params,self.selector,self.calibrator,self.source,self.params['hist_1d'])
+            test.plot()
 
         if 'hist_2d' in self.params:
             Hist2D(self.params,self.selector,self.calibrator,self.source,self.params['hist_2d'])
@@ -242,7 +253,9 @@ class Testsuite(object):
                     calcs.append((params,self.selector,self.calibrator))
                 pool.map(child_testsuite, calcs)
             else:
-                LinearSplit(self.params,self.selector,self.calibrator,self.source,self.params['split_x'],self.params['split_mean'])
+                test = LinearSplit(self.params,self.selector,self.calibrator,self.source,self.params['split_x'],self.params['split_mean'])
+                test.plot()
+
 
     def save_input_yaml( self ):
         """
@@ -850,8 +863,9 @@ class LinearSplit(object):
         self.split_y    = split_y
         self.step       = 0
 
-        # 'step' and this separate call is meant as a placeholder for potential parallelisation
-        self.iter()
+        if not self.params['plot_only']:
+            # 'step' and this separate call is meant as a placeholder for potential parallelisation
+            self.iter()
 
     def iter( self ):
         """
@@ -890,6 +904,24 @@ class LinearSplit(object):
                 table = np.array([n,xlow,xmean,xhigh,ymean,ystd]).T
                 print 'mean',table
                 write_table(self.params, table,'test_output','linear_split',var=x,var2=y,var3=str(self.splitter.bins))
+
+    def plot( self ):
+
+        for x in self.split_x:
+            for y in self.split_y:
+                fpath = file_path(self.params,'test_output','linear_split',var=x,var2=y,var3=str(self.splitter.bins))
+                data = np.loadtxt(fpath)
+                plt.figure()
+                plt.errorbar(data[:,2],data[:,4],yerr=data[:,5],marker='.',linestyle='',color='b')
+                plt.minorticks_on()
+                if y in self.params['e']:
+                    plt.axhline(0.,color='k')
+                plt.xlabel(x)
+                plt.ylabel(y)
+                plt.tight_layout()
+                fpath = file_path(self.params,'test_output','linear_split',var=x,var2=y,var3=str(self.splitter.bins),ftype='png')
+                plt.savefig(fpath, bbox_inches='tight')
+                plt.close()
 
 
 class GeneralStats(object):
@@ -958,8 +990,9 @@ class Hist1D(object):
         self.split      = split
         self.step       = 0
 
-        # 'step' and this separate call is meant as a placeholder for potential parallelisation
-        self.iter()
+        if not self.params['plot_only']:
+            # 'step' and this separate call is meant as a placeholder for potential parallelisation
+            self.iter()
 
     def iter( self ):
         """
@@ -982,6 +1015,24 @@ class Hist1D(object):
             # Save results
             write_table(self.params, edges,'test_output','hist_1d',var=x,var2='edges')
             write_table(self.params, bins, 'test_output','hist_1d',var=x,var2='bins' )
+
+    def plot( self ):
+
+        for x in self.split:
+            fpath = file_path(self.params,'test_output','hist_1d',var=x,var2='edges')
+            edges = np.loadtxt(fpath)
+            fpath = file_path(self.params,'test_output','hist_1d',var=x,var2='bins')
+            bins = np.loadtxt(fpath)
+            plt.figure()
+            plt.plot(edges[:-1],bins,marker='',linestyle='-',color='b',drawstyle='steps-pre',fillstyle='bottom')
+            plt.minorticks_on()
+            plt.xlabel(x)
+            plt.ylabel('N')
+            plt.tight_layout()
+            fpath = file_path(self.params,'test_output','hist_1d',var=x,ftype='png')
+            plt.savefig(fpath, bbox_inches='tight')
+            plt.close()
+
 
 class Hist2D(object):
     """
