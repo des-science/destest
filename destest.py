@@ -557,11 +557,10 @@ class Calibrator(object):
         if col == self.params['e'][0]:
             Rg = self.selector.get_masked(snmm.getArray(self.Rg1),mask)
             c = self.selector.get_masked(self.c1,mask)
+            print 'Rg',Rg
         if col == self.params['e'][1]:
             Rg = self.selector.get_masked(snmm.getArray(self.Rg1),mask)
             c = self.selector.get_masked(self.c2,mask)
-
-        print 'Rg',Rg
 
         if col in self.params['e']:
             
