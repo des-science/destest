@@ -141,7 +141,7 @@ def file_path( params, subdir, name, var=None, var2=None, var3=None, ftype='txt'
     return os.path.join(fpath,name)
 
 
-def write_table( params, table, subdir, name, var=None, var2=None, var3=var3 ):
+def write_table( params, table, subdir, name, var=None, var2=None, var3=None ):
     """
     Save a text table to file. Table must be a numpy-compatible array.
     """
