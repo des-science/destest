@@ -221,6 +221,12 @@ class Testsuite(object):
         if 'general_stats' in self.params:
             GeneralStats(self.params,self.selector,self.calibrator,self.source,self.params['general_stats'])
 
+        if 'hist_1d' in self.params:
+            Hist1D(self.params,self.selector,self.calibrator,self.source,self.params['hist_1d'])
+
+        if 'hist_2d' in self.params:
+            Hist2D(self.params,self.selector,self.calibrator,self.source,self.params['hist_2d'])
+
         if 'split_mean' in self.params:
 
             if self.params['use_mpi'] and (not child):
@@ -237,12 +243,6 @@ class Testsuite(object):
                 pool.map(child_testsuite, calcs)
             else:
                 LinearSplit(self.params,self.selector,self.calibrator,self.source,self.params['split_x'],self.params['split_mean'])
-
-        if 'hist_1d' in self.params:
-            Hist1D(self.params,self.selector,self.calibrator,self.source,self.params['hist_1d'])
-
-        if 'hist_2d' in self.params:
-            Hist2D(self.params,self.selector,self.calibrator,self.source,self.params['hist_2d'])
 
     def save_input_yaml( self ):
         """
@@ -874,6 +874,8 @@ class LinearSplit(object):
                 # get mean values of x in this bin
                 xmean.append( mean(x,xval,self.calibrator,return_std=False) )
             for y in self.split_y:
+                if x==y:
+                    continue
                 print 'y col',y
                 ymean = []
                 ystd  = []
@@ -931,7 +933,7 @@ class GeneralStats(object):
                 # get mean values of x in this bin
                 mean_,std_,rms_ = mean(x,xval,self.calibrator,return_std=True,return_rms=True)
                 # Save results
-                f.write(x+' '+str(min_)+' '+str(max_)+' '+str(mean_)+' '+str(std_)+' '+str(rms_))
+                f.write(x+' '+str(min_)+' '+str(max_)+' '+str(mean_)+' '+str(std_)+' '+str(rms_)+'\n')
         f.close()
 
 
