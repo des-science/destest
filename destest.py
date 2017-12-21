@@ -1030,8 +1030,8 @@ class Hist1D(object):
             bins = np.loadtxt(fpath)
             plt.figure()
             if x in self.params['plot_log_x']:
-                edges[edges<0] = -np.log(-edges[eges<0])
-                edges[edges>0] = np.log(edges[eges>0])
+                edges[edges<0] = -np.log(-edges[edges<0])
+                edges[edges>0] = np.log(edges[edges>0])
             plt.plot(edges[:-1],bins,marker='',linestyle='-',color='b',drawstyle='steps-pre',fillstyle='bottom')
             plt.minorticks_on()
             plt.xlabel(x)
