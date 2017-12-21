@@ -554,7 +554,6 @@ class Calibrator(object):
             # Get a selection response
             Rs = self.select_resp(col,mask,w,ws)
             R = np.sum(Rg*w[0],)/ws[0]
-            print 'R',R,np.sum(Rg*w[0]),ws[0],np.mean(Rg)
             R += Rs
             return R,c,w_
 
