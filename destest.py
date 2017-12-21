@@ -1022,7 +1022,7 @@ class Hist2D(object):
                     continue
                 print 'x col',x
                 self.splitter.get_y(y)
-                bins,xedges,yedges = np.histogram2D(self.splitter.x,self.splitter.y,bins=self.params['hist_bins'])
+                bins,xedges,yedges = np.histogram2d(self.splitter.x,self.splitter.y,bins=self.params['hist_bins'])
 
                 # Save results
                 write_table(self.params, np.array([xedges,yedges]).T,'test_output','hist_2d',var=x,var2=y,var3='edges')
