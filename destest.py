@@ -767,6 +767,8 @@ class Splitter(object):
                 self.y[i] = y_[self.order[i]]
             self.y = self.y[0]
 
+        print 'ysize',self.y.nbytes
+
         # If not asking for a bin selection, return
         if xbin is None:
             return
