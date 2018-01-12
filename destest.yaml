@@ -41,7 +41,7 @@ group      : 'catalog'
 # else if classic calibration, include table name (still as a list of length one)
 table      : ['unsheared', 'sheared_1p', 'sheared_1m', 'sheared_2p', 'sheared_2m']
 # shearing factor for metacal
-dg         : 0.1
+dg         : 0.01
 
 # Selection 
 # columns with which to mask the catalog
