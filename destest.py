@@ -10,7 +10,11 @@ import cProfile, pstats
 # and maybe a bit optimistic...
 from multiprocessing import Pool
 # from mpi4py import MPI
-from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
+try:
+    from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
+    use_snmm = True
+except:
+    use_snmm = False
 
 import matplotlib
 matplotlib.use ('agg')
@@ -28,6 +32,12 @@ else:
     string_types = basestring,
 
 
+def get_array( array ):
+    if use_snmm:
+        return snmm.getArray( array )
+    else:
+        return array
+
 def save_obj( obj, name ):
     with open(name, 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
@@ -36,95 +46,6 @@ def save_obj( obj, name ):
 def load_obj( name ):
     with open(name, 'rb') as f:
         return pickle.load(f)
-
-
-def convert_mcal_to_h5( catdir='/global/project/projectdirs/des/wl/desdata/users/esheldon/matched-catalogs/', file_ext='fits', outfile='./y3v02-mcal-001-combined-blind-v1.h5' ):
-    """
-    Converts metacal fits files into a single h5 file with separate tables for each of the unsheared and four sheared values.
-    """
-    import glob
-    from numpy.lib.recfunctions import append_fields
-
-    def append_sheared_table( f, cat, i, sheared, iter_end ):
-        cols = [name for name in cat.dtype.names if (name[-3:] == '_'+sheared)]
-        tmp  = cat[cols]
-        tmp.dtype.names = [name[:-3] for name in tmp.dtype.names]
-        tmp = append_fields(tmp,'size_ratio',data=tmp['size']/cat['psf_size'])
-        if i==0:
-            f.create_dataset('catalog/sheared_'+sheared, maxshape=(None), shape=(total_length,), dtype=tmp.dtype)
-        f['catalog/sheared_'+sheared][iter_end:iter_end+len(cat)] = tmp
-
-    total_length = 0
-    for i,name in enumerate(glob.glob(catdir+'*')):
-        if file_ext not in name:
-            continue
-        total_length += fio.FITS(name)[1].read_header()['NAXIS2']
-
-    f = h5py.File(outfile, 'w')
-    iter_end = 0
-    for i,name in enumerate(glob.glob(catdir+'*')):
-        if file_ext not in name:
-            continue
-        print name
-        cat=fio.FITS(name)[1].read()
-        cols = [name for name in cat.dtype.names if (not name[-3:] in ['1p','1m','2p','2m'])]
-        tmp = cat[cols]
-        tmp = append_fields(tmp,'size_ratio',data=tmp['size']/tmp['psf_size'])
-        if i==0:
-            f.create_dataset('catalog/unsheared', maxshape=(None), shape=(total_length,), dtype=tmp.dtype)
-        f['catalog/unsheared'][iter_end:iter_end+len(tmp)] = tmp
-        for sheared in ['1p','1m','2p','2m']:
-            append_sheared_table(f,cat,i,sheared,iter_end)
-        iter_end += len(cat)
-
-    f.close()
-
-
-def convert_mcal_to_h5_v2( catdir='/global/project/projectdirs/des/wl/desdata/users/esheldon/matched-catalogs/', file_ext='fits', outfile='./y3v02-mcal-001-combined-blind-v1.h5' ):
-    """
-    Converts metacal fits files into a single h5 file with separate tables for each of the unsheared and four sheared values.
-    This form is much faster to access, but doesn't preserve the complete recarray table structure.
-    """
-    import glob
-    from numpy.lib.recfunctions import append_fields
-
-    def append_sheared_table( f, cat, i, sheared, iter_end, total_length ):
-        cols = [name for name in cat.dtype.names if (name[-2:] == sheared)]
-        for name in cols:
-            if i==0:
-                f.create_dataset('catalog/sheared_'+sheared+'/'+name[:-3], maxshape=(total_length,), shape=(total_length,), dtype=cat.dtype[name], chunks=(1000000,))
-            f['catalog/sheared_'+sheared+'/'+name[:-3]][iter_end:iter_end+len(cat)] = cat[name]
-        if i==0:
-            f.create_dataset('catalog/sheared_'+sheared+'/size_ratio', maxshape=(total_length,), shape=(total_length,), dtype=cat.dtype['size'], chunks=(1000000,))
-        f['catalog/sheared_'+sheared+'/size_ratio'][iter_end:iter_end+len(cat)] = cat['size_'+sheared]/cat['psf_size']
-
-    total_length = 0
-    for i,name in enumerate(glob.glob(catdir+'*')):
-        if file_ext not in name:
-            continue
-        total_length += fio.FITS(name)[1].read_header()['NAXIS2']
-
-    f = h5py.File(outfile, 'w')
-    iter_end = 0
-    for i,fname in enumerate(glob.glob(catdir+'*')):
-        if file_ext not in fname:
-            continue
-        print fname
-        cat=fio.FITS(fname)[1].read()
-        cols = [name for name in cat.dtype.names if (not name[-2:] in ['1p','1m','2p','2m'])]
-        if i!=0:
-            for name in cols:
-                if i==0:
-                    f.create_dataset('catalog/unsheared/'+name, maxshape=(total_length,), shape=(total_length,), dtype=cat.dtype[name], chunks=(1000000,))
-                f['catalog/unsheared/'+name][iter_end:iter_end+len(cat)] = cat[name]
-            if i==0:
-                f.create_dataset('catalog/unsheared/size_ratio', maxshape=(total_length,), shape=(total_length,), dtype=cat.dtype['size'], chunks=(1000000,))
-            f['catalog/unsheared/size_ratio'][iter_end:iter_end+len(cat)] = cat['size']/cat['psf_size']
-            for sheared in ['1p','1m','2p','2m']:
-                append_sheared_table(f,cat,i,sheared,iter_end,total_length)
-        iter_end += len(cat)
-
-    f.close()
 
 def file_path( params, subdir, name, var=None, var2=None, var3=None, ftype='txt' ):
     """
@@ -467,15 +388,21 @@ class Selector(object):
             # save cache of masks to speed up reruns
             save_obj( [mask, mask_], mask_file )
 
-        self.mask_ = snmm.createArray((len(mask_),), dtype=np.int64)
-        snmm.getArray(self.mask_)[:] = mask_[:]
-        mask_ = None
+        if use_snmm:
+            self.mask_ = snmm.createArray((len(mask_),), dtype=np.int64)
+            snmm.getArray(self.mask_)[:] = mask_[:]
+            mask_ = None
+        else:
+            self.mask_ = mask_
 
         self.mask = []
         for i in range(len(mask)):
-            self.mask.append( snmm.createArray((len(mask[i]),), dtype=np.bool) )
-            snmm.getArray(self.mask[i])[:] = mask[i][:]
-            mask[i] = None
+            if use_snmm:
+                self.mask.append( snmm.createArray((len(mask[i]),), dtype=np.bool) )
+                snmm.getArray(self.mask[i])[:] = mask[i][:]
+                mask[i] = None
+            else:
+                self.mask.append( mask[i] )
 
     def get_col( self, col, nosheared=False, uncut=False ):
         """
@@ -487,12 +414,12 @@ class Selector(object):
 
         # trim and return
         for i in range(len(x)):
-            x[i] = x[i][snmm.getArray(self.mask_)]
+            x[i] = x[i][get_array(self.mask_)]
         if uncut:
             return x
 
         for i in range(len(x)):
-            x[i] = x[i][snmm.getArray(self.mask[i])]
+            x[i] = x[i][get_array(self.mask[i])]
         return x
 
     def get_masked( self, x, mask ):
@@ -510,12 +437,12 @@ class Selector(object):
             if np.isscalar(x):
                 return x
             else:
-                return x[snmm.getArray(self.mask[0])][mask[0]]
+                return x[get_array(self.mask[0])][mask[0]]
 
         if np.isscalar(x[0]):
             return x
 
-        return [ x_[snmm.getArray(self.mask[i])][mask[i]] for i,x_ in enumerate(x) ]
+        return [ x_[get_array(self.mask[i])][mask[i]] for i,x_ in enumerate(x) ]
 
     def get_mask( self, mask=None ):
         """
@@ -523,9 +450,9 @@ class Selector(object):
         """
 
         if mask is None:
-            return [ np.where(snmm.getArray(self.mask[i]))[0] for i in range(len(self.mask)) ]
+            return [ np.where(get_array(self.mask[i]))[0] for i in range(len(self.mask)) ]
 
-        return [ np.where(snmm.getArray(self.mask[i]))[0][mask_] for i,mask_ in enumerate(mask) ]
+        return [ np.where(get_array(self.mask[i]))[0][mask_] for i,mask_ in enumerate(mask) ]
 
 
 class Calibrator(object):
@@ -555,11 +482,11 @@ class Calibrator(object):
             return w_
 
         if col == self.params['e'][0]:
-            Rg = self.selector.get_masked(snmm.getArray(self.Rg1),mask)
+            Rg = self.selector.get_masked(get_array(self.Rg1),mask)
             c = self.selector.get_masked(self.c1,mask)
-            print 'Rg',Rg
+            print 'Rg',
         if col == self.params['e'][1]:
-            Rg = self.selector.get_masked(snmm.getArray(self.Rg1),mask)
+            Rg = self.selector.get_masked(get_array(self.Rg2),mask)
             c = self.selector.get_masked(self.c2,mask)
 
         if col in self.params['e']:
@@ -613,18 +540,24 @@ class MetaCalib(Calibrator):
             Rg2 = self.selector.get_col(self.params['Rg'][1],uncut=True)[0]
             e1  = self.selector.get_col(self.params['e'][0],nosheared=True,uncut=True)[0]
             e2  = self.selector.get_col(self.params['e'][1],nosheared=True,uncut=True)[0]
-            self.Rg1 = snmm.createArray((len(Rg1),), dtype=np.float64)
-            snmm.getArray(self.Rg1)[:] = Rg1[:]
-            Rg1 = None
-            self.Rg2 = snmm.createArray((len(Rg2),), dtype=np.float64)
-            snmm.getArray(self.Rg2)[:] = Rg2[:]
-            Rg2 = None
-            self.e1 = snmm.createArray((len(e1),), dtype=np.float64)
-            snmm.getArray(self.e1)[:] = e1[:]
-            e1 = None
-            self.e2 = snmm.createArray((len(e2),), dtype=np.float64)
-            snmm.getArray(self.e2)[:] = e2[:]
-            e2 = None
+            if use_snmm:
+                self.Rg1 = snmm.createArray((len(Rg1),), dtype=np.float64)
+                snmm.getArray(self.Rg1)[:] = Rg1[:]
+                Rg1 = None
+                self.Rg2 = snmm.createArray((len(Rg2),), dtype=np.float64)
+                snmm.getArray(self.Rg2)[:] = Rg2[:]
+                Rg2 = None
+                self.e1 = snmm.createArray((len(e1),), dtype=np.float64)
+                snmm.getArray(self.e1)[:] = e1[:]
+                e1 = None
+                self.e2 = snmm.createArray((len(e2),), dtype=np.float64)
+                snmm.getArray(self.e2)[:] = e2[:]
+                e2 = None
+            else:
+                self.Rg1 = Rg1
+                self.Rg2 = Rg2
+                self.e1 = e1
+                self.e2 = e2
         self.c1 = self.c2 = 0.
         if 'c' in self.params:
             self.c1 = self.selector.get_col(self.params['c'][0],uncut=True)
@@ -643,21 +576,21 @@ class MetaCalib(Calibrator):
             if mask is not None:
                 if len(mask)==1: # exit for non-sheared column selections
                     return 0.
-            mask_ = [ snmm.getArray(imask) for imask in self.selector.mask ]
+            mask_ = [ get_array(imask) for imask in self.selector.mask ]
 
         if col == self.params['e'][0]:
-            eSp = np.sum(snmm.getArray(self.e1)[mask_[1]]*w[1])
-            eSm = np.sum(snmm.getArray(self.e1)[mask_[2]]*w[2])
+            eSp = np.sum(get_array(self.e1)[mask_[1]]*w[1])
+            eSm = np.sum(get_array(self.e1)[mask_[2]]*w[2])
             if mask is not None:
-                eSp = np.sum(snmm.getArray(self.e1)[mask_[1]][mask[1]]*w[1])
-                eSm = np.sum(snmm.getArray(self.e1)[mask_[2]][mask[2]]*w[2])
+                eSp = np.sum(get_array(self.e1)[mask_[1]][mask[1]]*w[1])
+                eSm = np.sum(get_array(self.e1)[mask_[2]][mask[2]]*w[2])
             Rs = eSp/ws[1] - eSm/ws[2]
         elif col == self.params['e'][1]:
-            eSp = np.sum(snmm.getArray(self.e1)[mask_[3]]*w[3])
-            eSm = np.sum(snmm.getArray(self.e1)[mask_[4]]*w[4])
+            eSp = np.sum(get_array(self.e1)[mask_[3]]*w[3])
+            eSm = np.sum(get_array(self.e1)[mask_[4]]*w[4])
             if mask is not None:
-                eSp = np.sum(snmm.getArray(self.e1)[mask_[3]][mask[3]]*w[3])
-                eSm = np.sum(snmm.getArray(self.e1)[mask_[4]][mask[4]]*w[4])
+                eSp = np.sum(get_array(self.e1)[mask_[3]][mask[3]]*w[3])
+                eSm = np.sum(get_array(self.e1)[mask_[4]][mask[4]]*w[4])
             Rs = eSp/ws[3] - eSm/ws[4]
         else:
             return 0.
