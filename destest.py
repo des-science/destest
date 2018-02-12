@@ -254,7 +254,7 @@ class H5Source(SourceParser):
 
             self.hdf = h5py.File(self.params['filename'], mode = 'r+')
 
-    def read( self, col=None, rows=None, nosheared=False ):
+    def read( self, col=None, rows=None, nosheared=False, full_path = None ):
 
         self.open()
 
@@ -273,6 +273,9 @@ class H5Source(SourceParser):
                 out = self.hdf[self.params['group']][table][col][:] 
 
             return out
+
+        if full_path is not None:
+            return self.hdf[full_path]
 
         if col is None:
             raise NameError('Must specify column.')
@@ -348,45 +351,66 @@ class Selector(object):
         Build the limiting mask for use in discarding any data that will never be used.
         """
 
-        mask = None
+        mask = []
+        if select_path in self.params:
+            tmp = np.arange(self.source.size)
+            select = self.source.read(col=self.params['select_path'])
+            mask.append( np.in1d(select,tmp,assume_unique=True) )
+            select = self.source.read(col=self.params['select_path']+'_1p')
+            mask.append( np.in1d(select,tmp,assume_unique=True) )
+            select = self.source.read(col=self.params['select_path']+'_1m')
+            mask.append( np.in1d(select,tmp,assume_unique=True) )
+            select = self.source.read(col=self.params['select_path']+'_2p')
+            mask.append( np.in1d(select,tmp,assume_unique=True) )
+            select = self.source.read(col=self.params['select_path']+'_2m')
+            mask.append( np.in1d(select,tmp,assume_unique=True) )
 
-        # Setup mask file cache path.
-        mask_file = file_path(self.params,'cache','mask',ftype='pickle')
-        if self.params['load_cache']:
-            # if mask cache exists, read mask from pickle and skip parsing yaml selection conditions.
-
-            if os.path.exists(mask_file):
-                mask, mask_ = load_obj(mask_file)
-
-        if mask is None:
-            # mask cache doesn't exist, or you chose to ignore it, so masks are built from yaml selection conditions
-            # set up 'empty' mask
-            mask = [np.ones(self.source.size, dtype=bool)]
-            if self.params['cal_type']=='mcal':
-                mask = mask * 5
-
-            # For each of 'select_cols' in yaml file, read in the data and iteratively apply the appropriate mask
-            for i,select_col in enumerate(self.params['select_cols']):
-                cols = self.source.read(col=select_col)
-                for j,col in enumerate(cols):
-                    mask[j] = mask[j] & eval(self.params['select_exp'][i])
-
-            # Loop over unsheared and sheared mask arrays and build limiting mask
             mask_ = np.zeros(self.source.size, dtype=bool)
             for imask in mask:
                 mask_ = mask_ | imask
 
-            print len(mask_),np.sum(mask_)
+        else:
 
-            # Cut down masks to the limiting mask
-            # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
-            for i in range(len(mask)):
-                mask[i] = mask[i][mask_]
-            mask_ = np.where(mask_)[0]
-            print len(mask_),len(mask[0]),np.sum(mask[0])
+            mask = None
 
-            # save cache of masks to speed up reruns
-            save_obj( [mask, mask_], mask_file )
+            # Setup mask file cache path.
+            mask_file = file_path(self.params,'cache','mask',ftype='pickle')
+            if self.params['load_cache']:
+                # if mask cache exists, read mask from pickle and skip parsing yaml selection conditions.
+
+                if os.path.exists(mask_file):
+                    mask, mask_ = load_obj(mask_file)
+
+            if mask is None:
+
+                # mask cache doesn't exist, or you chose to ignore it, so masks are built from yaml selection conditions
+                # set up 'empty' mask
+                mask = [np.ones(self.source.size, dtype=bool)]
+                if self.params['cal_type']=='mcal':
+                    mask = mask * 5
+
+                # For each of 'select_cols' in yaml file, read in the data and iteratively apply the appropriate mask
+                for i,select_col in enumerate(self.params['select_cols']):
+                    cols = self.source.read(col=select_col)
+                    for j,col in enumerate(cols):
+                        mask[j] = mask[j] & eval(self.params['select_exp'][i])
+
+                # Loop over unsheared and sheared mask arrays and build limiting mask
+                mask_ = np.zeros(self.source.size, dtype=bool)
+                for imask in mask:
+                    mask_ = mask_ | imask
+
+                print len(mask_),np.sum(mask_)
+
+                # Cut down masks to the limiting mask
+                # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
+                for i in range(len(mask)):
+                    mask[i] = mask[i][mask_]
+                mask_ = np.where(mask_)[0]
+                print len(mask_),len(mask[0]),np.sum(mask[0])
+
+                # save cache of masks to speed up reruns
+                save_obj( [mask, mask_], mask_file )
 
         if use_snmm:
             self.mask_ = snmm.createArray((len(mask_),), dtype=np.int64)
