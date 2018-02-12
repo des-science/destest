@@ -44,6 +44,8 @@ table      : ['unsheared', 'sheared_1p', 'sheared_1m', 'sheared_2p', 'sheared_2m
 dg         : 0.01
 
 # Selection 
+# optional direct path to select flags
+select_path : ['index/select']
 # columns with which to mask the catalog
 select_cols : ['snr','snr','size_ratio','flags']
 # expressions by which to mask (must match 1-1 the list of select_cols)
