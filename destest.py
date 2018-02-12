@@ -352,8 +352,8 @@ class Selector(object):
         """
 
         mask = []
+        tmp = np.arange(self.source.size)
         if select_path in self.params:
-            tmp = np.arange(self.source.size)
             select = self.source.read(col=self.params['select_path'])
             mask.append( np.in1d(select,tmp,assume_unique=True) )
             select = self.source.read(col=self.params['select_path']+'_1p')
