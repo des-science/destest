@@ -275,7 +275,7 @@ class H5Source(SourceParser):
             return out
 
         if full_path is not None:
-            return self.hdf[full_path]
+            return self.hdf[full_path][:]
 
         if col is None:
             raise NameError('Must specify column.')
