@@ -352,18 +352,19 @@ class Selector(object):
         """
 
         mask = []
-        tmp = np.arange(self.source.size)
         if 'select_path' in self.params:
+            tmp = np.arange(self.source.size)
             select = self.source.read(full_path=self.params['select_path'])
-            mask.append( np.in1d(select,tmp,assume_unique=True) )
+            mask.append( np.in1d(tmp,select,assume_unique=True) )
             select = self.source.read(full_path=self.params['select_path']+'_1p')
-            mask.append( np.in1d(select,tmp,assume_unique=True) )
+            mask.append( np.in1d(tmp,select,assume_unique=True) )
             select = self.source.read(full_path=self.params['select_path']+'_1m')
-            mask.append( np.in1d(select,tmp,assume_unique=True) )
+            mask.append( np.in1d(tmp,select,assume_unique=True) )
             select = self.source.read(full_path=self.params['select_path']+'_2p')
-            mask.append( np.in1d(select,tmp,assume_unique=True) )
+            mask.append( np.in1d(tmp,select,assume_unique=True) )
             select = self.source.read(full_path=self.params['select_path']+'_2m')
-            mask.append( np.in1d(select,tmp,assume_unique=True) )
+            mask.append( np.in1d(tmp,select,assume_unique=True) )
+            tmp = None
 
             mask_ = np.zeros(self.source.size, dtype=bool)
             for imask in mask:
