@@ -366,6 +366,7 @@ class Selector(object):
 
             if 'select_path' in self.params:
                 print 'using select_path for mask'
+                mask = []
 
                 tmp = np.arange(self.source.size)
                 select = self.source.read(full_path=self.params['select_path'])
