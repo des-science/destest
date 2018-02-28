@@ -360,11 +360,12 @@ class Selector(object):
 
             if os.path.exists(mask_file):
                 mask, mask_ = load_obj(mask_file)
+                print 'loaded mask cache'
 
         if mask is None:
 
             if 'select_path' in self.params:
-
+                print 'using select_path for mask'
 
                 tmp = np.arange(self.source.size)
                 select = self.source.read(full_path=self.params['select_path'])
@@ -445,9 +446,11 @@ class Selector(object):
 
         # x at this point is the full column
         x = self.source.read(col=col, nosheared=nosheared)
+        print len(x)
 
         # trim and return
         for i in range(len(x)):
+            print len(x[i]),len(self.mask_)
             x[i] = x[i][get_array(self.mask_)]
         if uncut:
             return x
