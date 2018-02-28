@@ -12,7 +12,7 @@ selector    = destest.Selector(params,source)
 
 If you are using multiple data sources (different catalog paths in the h5 file - i.e., /catalog/metacal/ and /catalog/gold) you can inherit a selector instance from another selector (to save having to rebuild the masks):
 
-selector2    = destest.Selector(params,source,inherit=selector)
+selector2    = destest.Selector(params2,source2,inherit=selector)
 
 Get a column:
 
