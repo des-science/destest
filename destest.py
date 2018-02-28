@@ -384,9 +384,7 @@ class Selector(object):
                 mask_ = np.zeros(self.source.size, dtype=bool)
                 for imask in mask:
                     mask_ = mask_ | imask
-                print len(mask_),imask
                 mask_ = np.where(mask_)[0]
-                print len(mask_)
 
                 # Cut down masks to the limiting mask
                 # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
@@ -425,6 +423,7 @@ class Selector(object):
             save_obj( [mask, mask_], mask_file )
 
         if use_snmm:
+            print 'using snmm'
             self.mask_ = snmm.createArray((len(mask_),), dtype=np.int64)
             snmm.getArray(self.mask_)[:] = mask_[:]
             mask_ = None
@@ -451,7 +450,7 @@ class Selector(object):
 
         # trim and return
         for i in range(len(x)):
-            print len(x[i]),len(self.mask_)
+            print self.mask_
             x[i] = x[i][get_array(self.mask_)]
         if uncut:
             return x
