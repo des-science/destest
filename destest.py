@@ -335,10 +335,14 @@ class Selector(object):
     Initiation will parse the 'select_cols' conditions in the yaml file and create a limiting mask 'mask_', ie, an 'or' of the individual unsheared and sheared metacal masks. The individual masks (list of 1 or 5 masks) are 'mask'.
     """
 
-    def __init__( self, params, source ):
+    def __init__( self, params, source, inherit = None ):
         self.params    = params
         self.source    = source
-        self.build_limiting_mask()
+        if inherit is None:
+            self.build_limiting_mask()
+        else:
+            self.mask = inherit.mask
+            self.mask_ = inherit.mask_
 
     def kill_source( self ):
         self.source = None
