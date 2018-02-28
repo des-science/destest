@@ -10,6 +10,10 @@ source      = destest.H5Source(params)
 
 selector    = destest.Selector(params,source)
 
+If you are using multiple data sources (different catalog paths in the h5 file - i.e., /catalog/metacal/ and /catalog/gold) you can inherit a selector instance from another selector (to save having to rebuild the masks):
+
+selector2    = destest.Selector(params,source,inherit=selector)
+
 Get a column:
 
 selector.get_col(col) # returns a column from the catalog for column name col. If you've instantiated selector with an appropriate yaml file input, it will have used the correct cuts that you specified in the yaml file. You can use nosheared = True to not get sheared columns (it will return a tuple).
