@@ -4,6 +4,8 @@ To utilize catalog interface:
 
 params      = yaml.load(open(param_file)) ... see inclued yaml param file for example of how to specify the metacal part of the h5 file. 
 
+params['param_file'] = param_file
+
 source      = destest.H5Source(params)
 
 selector    = destest.Selector(params,source)
