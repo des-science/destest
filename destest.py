@@ -506,7 +506,7 @@ class Calibrator(object):
         self.params = params
         self.selector = selector
 
-    def calibrate(self,col,mask=None,return_full_w=False,weight_only=False):
+    def calibrate(self,col,mask=None,return_full_w=False,weight_only=False,return_wRg=False):
         """
         Return the calibration factor and weights, given potentially an ellipticity and selection.
         """
@@ -519,6 +519,11 @@ class Calibrator(object):
             w_ = w[0]
         if weight_only:
             return w_
+
+        if return_Rg:
+            Rg1 = self.selector.get_masked(get_array(self.Rg1),mask)
+            Rg2 = self.selector.get_masked(get_array(self.Rg2),mask)
+            return (Rg1+Rg2)*w[0]/2.
 
         if col == self.params['e'][0]:
             Rg = self.selector.get_masked(get_array(self.Rg1),mask)
