@@ -520,7 +520,7 @@ class Calibrator(object):
         if weight_only:
             return w_
 
-        if return_Rg:
+        if return_wRg:
             Rg1 = self.selector.get_masked(get_array(self.Rg1),mask)
             Rg2 = self.selector.get_masked(get_array(self.Rg2),mask)
             return (Rg1+Rg2)*w[0]/2.
