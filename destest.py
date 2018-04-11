@@ -291,6 +291,7 @@ class H5Source(SourceParser):
         # For classic file, get single column.
         # For both metacal and classic files, output is a list of columns (possible of length 1)
         for i,t in enumerate(self.params['table']):
+            print 'read',i,t
             if i==0:
                 if col not in self.hdf[self.params['group']][t].keys():
                     raise NameError('Col '+col+' not found in hdf5 file.')
@@ -456,6 +457,7 @@ class Selector(object):
 
         # x at this point is the full column
         x = self.source.read(col=col, nosheared=nosheared)
+        print 'selector',x
 
         # trim and return
         for i in range(len(x)):
