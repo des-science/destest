@@ -533,9 +533,7 @@ class Calibrator(object):
         """
 
         # Get the weights
-        print self.w,mask
         w  = self.selector.get_masked(self.w,mask)
-        print w
         if return_full_w:
             w_ = w
         else:
@@ -546,14 +544,11 @@ class Calibrator(object):
         if col == self.params['e'][0]:
             Rg = self.selector.get_masked(get_array(self.Rg1),mask)
             c = self.selector.get_masked(self.c1,mask)
-            print 'Rg',
         if col == self.params['e'][1]:
             Rg = self.selector.get_masked(get_array(self.Rg2),mask)
             c = self.selector.get_masked(self.c2,mask)
 
-        print 'test'
         if col in self.params['e']:
-            print '\nIn destest line539: Rg = ',Rg
             print Rg,w
             ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
             # Get a selection response
