@@ -256,6 +256,10 @@ class H5Source(SourceParser):
 
             self.hdf = h5py.File(self.params['filename'], mode = 'r+')
 
+    def read_direct( self, group, table, col):
+
+        return self.hdf[group][table][col][:] 
+
     def read( self, col=None, rows=None, nosheared=False, full_path = None ):
 
         self.open()
@@ -495,6 +499,13 @@ class Selector(object):
 
         return [ np.where(get_array(self.mask[i]))[0][mask_] for i,mask_ in enumerate(mask) ]
 
+    def get_match( self ):
+        """
+        Get matching to parent catalog.
+        """
+
+        return self.source.read_direct( self.params['group'].replace('catalog','index'), self.params['table'][0], 'match_gold')
+
 
 class Calibrator(object):
     """
@@ -522,11 +533,6 @@ class Calibrator(object):
         if weight_only:
             return w_
 
-        if return_wRg:
-            Rg1 = self.selector.get_masked(get_array(self.Rg1),mask)
-            Rg2 = self.selector.get_masked(get_array(self.Rg2),mask)
-            return (Rg1+Rg2)*w[0]/2.
-
         if col == self.params['e'][0]:
             Rg = self.selector.get_masked(get_array(self.Rg1),mask)
             c = self.selector.get_masked(self.c1,mask)
@@ -540,9 +546,20 @@ class Calibrator(object):
             ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
             # Get a selection response
             Rs = self.select_resp(col,mask,w,ws)
-            R = np.sum(Rg*w[0],)/ws[0]
-            R += Rs
-            return R,c,w_
+            R  = Rg + Rs
+            if return_wRg:
+                Rg1 = self.selector.get_masked(get_array(self.Rg1),mask)
+                Rg2 = self.selector.get_masked(get_array(self.Rg2),mask)
+                if col == self.params['e'][0]:
+                    Rs2 = self.select_resp(self.params['e'][1],mask,w,ws)
+                else:
+                    Rs2 = self.select_resp(self.params['e'][0],mask,w,ws)
+                return ((Rg1+Rg2)/2.+(Rs+Rs2)/2.)*w[0]
+            elif return_full:
+                return R,c,w_
+            else:
+                R = np.sum((Rg+Rs)*w[0],)/ws[0]
+                return R,c,w_
 
         else:
             
@@ -564,8 +581,8 @@ class NoCalib(Calibrator):
 
         super(NoCalib,self).__init__(params,selector)
 
-        self.Rg1 = self.Rg2 = 1.
-        self.c1 = self.c2 = 0.
+        self.Rg1 = self.Rg2 = None
+        self.c1 = self.c2 = None
         self.w = [1]
         if 'w' in self.params:
             self.w = self.selector.get_col(self.params['w'])
@@ -642,7 +659,8 @@ class MetaCalib(Calibrator):
             return 0.
 
         Rs /= 2.*self.params['dg']
-        print 'Rs',Rs,Rs*2.*self.params['dg']
+        print 'Rs',Rs,Rs*2.*self.params['dg'] 
+        print 'check what dg is used....'
 
         return Rs
 
