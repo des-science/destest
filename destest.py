@@ -297,16 +297,21 @@ class H5Source(SourceParser):
                     raise NameError('Col '+col+' not found in hdf5 file.')
             else:
                 if nosheared:
+                    print 'skipping sheared columns for',col
                     continue
                 if col not in self.sheared_cols:
+                    print col,'not in sheared cols'
                     continue
                 if col not in self.hdf[self.params['group']][t].keys():
+                    print col,'not in table keys'
                     raise NameError('Col '+col+' not found in sheared table '+t+' of hdf5 file.')
 
             if rows is not None:
                 out.append( add_out(t,rows,col) )
             else:
                 out.append( add_out(t,None,col) )
+
+        print out
 
         self.close()
 
