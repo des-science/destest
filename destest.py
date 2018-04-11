@@ -542,7 +542,7 @@ class Calibrator(object):
             c = self.selector.get_masked(self.c2,mask)
 
         if col in self.params['e']:
-            
+            print '\nIn destest line539: Rg = ',Rg
             ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
             # Get a selection response
             Rs = self.select_resp(col,mask,w,ws)
