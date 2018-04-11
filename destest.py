@@ -527,7 +527,7 @@ class Calibrator(object):
         self.params = params
         self.selector = selector
 
-    def calibrate(self,col,mask=None,return_full_w=False,weight_only=False,return_wRg=False):
+    def calibrate(self,col,mask=None,return_full_w=False,weight_only=False,return_wRg=False,return_full=False):
         """
         Return the calibration factor and weights, given potentially an ellipticity and selection.
         """
