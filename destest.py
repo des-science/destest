@@ -245,6 +245,7 @@ class H5Source(SourceParser):
             if len(self.params['table'])>1:
                 # save sheared column names
                 self.sheared_cols = self.hdf[self.params['group']][self.params['table'][1]].keys()
+                print self.sheared_cols
 
         else:
 
