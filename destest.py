@@ -525,6 +525,7 @@ class Calibrator(object):
         """
 
         # Get the weights
+        print self.w,mask
         w  = self.selector.get_masked(self.w,mask)
         print w
         if return_full_w:
