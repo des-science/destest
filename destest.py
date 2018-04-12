@@ -654,6 +654,7 @@ class MetaCalib(Calibrator):
                 print np.max(mask_[1]),mask_[1],mask[1]
                 eSp = np.sum(get_array(self.e1)[mask_[1]][mask[1]]*w[1])
                 eSm = np.sum(get_array(self.e1)[mask_[2]][mask[2]]*w[2])
+                print 'done'
             Rs = eSp/ws[1] - eSm/ws[2]
         elif col == self.params['e'][1]:
             eSp = np.sum(get_array(self.e1)[mask_[3]]*w[3])
