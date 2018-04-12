@@ -544,6 +544,8 @@ class Calibrator(object):
             Rg = self.selector.get_masked(get_array(self.Rg2),mask)
             c = self.selector.get_masked(self.c2,mask)
 
+        print len(Rg),len(mask),np.sum(mask)
+
         if col in self.params['e']:
             print Rg,w
             ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
