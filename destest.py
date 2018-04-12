@@ -460,15 +460,18 @@ class Selector(object):
 
         # x at this point is the full column
         x = self.source.read(col=col, nosheared=nosheared)
+        print 'get_col length',len(x)
 
         # trim and return
         for i in range(len(x)):
             x[i] = x[i][get_array(self.mask_)]
+            print 'get_col length i',len(x[i])
         if uncut:
             return x
 
         for i in range(len(x)):
             x[i] = x[i][get_array(self.mask[i])]
+            print 'get_col length2 i',len(x[i])
         return x
 
     def get_masked( self, x, mask ):
