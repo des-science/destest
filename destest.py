@@ -647,10 +647,10 @@ class MetaCalib(Calibrator):
             mask_ = [ get_array(imask) for imask in self.selector.mask ]
 
         if col == self.params['e'][0]:
-            print len(get_array(self.e1)),len(mask_[1])
             eSp = np.sum(get_array(self.e1)[mask_[1]]*w[1])
             eSm = np.sum(get_array(self.e1)[mask_[2]]*w[2])
             if mask is not None:
+                print len(get_array(self.e1)),len(mask_[1]),len(mask[1])
                 eSp = np.sum(get_array(self.e1)[mask_[1]][mask[1]]*w[1])
                 eSm = np.sum(get_array(self.e1)[mask_[2]][mask[2]]*w[2])
             Rs = eSp/ws[1] - eSm/ws[2]
