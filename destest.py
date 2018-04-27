@@ -261,7 +261,7 @@ class H5Source(SourceParser):
         print 'READING FROM HDF5 FILE: group = ',group,' table = ',table,' col = ',col
         self.open() #attempting this
         return self.hdf[group][table][col][:] 
-
+        self.close()
     def read( self, col=None, rows=None, nosheared=False, full_path = None ):
 
         self.open()
