@@ -425,14 +425,11 @@ class Selector(object):
                 for imask in mask:
                     mask_ = mask_ | imask
 
-                print len(mask_),np.sum(mask_)
-
                 # Cut down masks to the limiting mask
                 # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
                 for i in range(len(mask)):
                     mask[i] = mask[i][mask_]
                 mask_ = np.where(mask_)[0]
-                print len(mask_),len(mask[0]),np.sum(mask[0])
 
             # save cache of masks to speed up reruns
             save_obj( [mask, mask_], mask_file )
@@ -548,10 +545,7 @@ class Calibrator(object):
             Rg = self.selector.get_masked(get_array(self.Rg2),mask)
             c = self.selector.get_masked(self.c2,mask)
 
-        print len(Rg),len(mask),np.sum(mask[0])
-
         if col in self.params['e']:
-            print Rg,w
             ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
             # Get a selection response
             Rs = self.select_resp(col,mask,w,ws)
@@ -657,12 +651,8 @@ class MetaCalib(Calibrator):
             eSp = np.sum(get_array(self.e1)[mask_[1]]*w[1])
             eSm = np.sum(get_array(self.e1)[mask_[2]]*w[2])
             if mask is not None:
-                print 'eSp',len(get_array(self.e1)),len(mask_[1]),len(mask[1])
-                print np.max(mask_[1]),mask_[1],mask[1]
-                print len(get_array(self.e1)[mask_[1]]),len((get_array(self.e1)[mask_[1]])[mask[1]])
                 eSp = np.sum((get_array(self.e1)[mask_[1]])[mask[1]]*w[1])
                 eSm = np.sum(get_array(self.e1)[mask_[2]][mask[2]]*w[2])
-                print 'done'
             Rs = eSp/ws[1] - eSm/ws[2]
         elif col == self.params['e'][1]:
             eSp = np.sum(get_array(self.e1)[mask_[3]]*w[3])
