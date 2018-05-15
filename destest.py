@@ -381,30 +381,38 @@ class Selector(object):
 
             if 'select_path' in self.params:
                 print 'using select_path for mask'
-                mask = []
 
-                tmp = np.arange(self.source.size)
-                select = self.source.read(full_path=self.params['select_path'])
-                mask.append( np.in1d(tmp,select,assume_unique=True) )
-                select = self.source.read(full_path=self.params['select_path']+'_1p')
-                mask.append( np.in1d(tmp,select,assume_unique=True) )
-                select = self.source.read(full_path=self.params['select_path']+'_1m')
-                mask.append( np.in1d(tmp,select,assume_unique=True) )
-                select = self.source.read(full_path=self.params['select_path']+'_2p')
-                mask.append( np.in1d(tmp,select,assume_unique=True) )
-                select = self.source.read(full_path=self.params['select_path']+'_2m')
-                mask.append( np.in1d(tmp,select,assume_unique=True) )
-                tmp = None
+                if self.params['select_path'] is None:
+                    print 'None select path - ignoring selection'
+                    mask = [np.ones(self.source.size,dtype=bool)]
+                    mask_ = np.where(mask)[0]
 
-                mask_ = np.zeros(self.source.size, dtype=bool)
-                for imask in mask:
-                    mask_ = mask_ | imask
-                mask_ = np.where(mask_)[0]
+                else:
 
-                # Cut down masks to the limiting mask
-                # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
-                for i in range(len(mask)):
-                    mask[i] = mask[i][mask_]
+                    mask = []
+
+                    tmp = np.arange(self.source.size)
+                    select = self.source.read(full_path=self.params['select_path'])
+                    mask.append( np.in1d(tmp,select,assume_unique=True) )
+                    select = self.source.read(full_path=self.params['select_path']+'_1p')
+                    mask.append( np.in1d(tmp,select,assume_unique=True) )
+                    select = self.source.read(full_path=self.params['select_path']+'_1m')
+                    mask.append( np.in1d(tmp,select,assume_unique=True) )
+                    select = self.source.read(full_path=self.params['select_path']+'_2p')
+                    mask.append( np.in1d(tmp,select,assume_unique=True) )
+                    select = self.source.read(full_path=self.params['select_path']+'_2m')
+                    mask.append( np.in1d(tmp,select,assume_unique=True) )
+                    tmp = None
+
+                    mask_ = np.zeros(self.source.size, dtype=bool)
+                    for imask in mask:
+                        mask_ = mask_ | imask
+                    mask_ = np.where(mask_)[0]
+
+                    # Cut down masks to the limiting mask
+                    # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
+                    for i in range(len(mask)):
+                        mask[i] = mask[i][mask_]
 
             else:
 
