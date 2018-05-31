@@ -385,7 +385,7 @@ class Selector(object):
                 if (self.params['select_path'] is None)|(self.params['select_path'].lower() == 'none'):
                     print 'None select path - ignoring selection'
                     mask = [np.ones(self.source.size,dtype=bool)]
-                    mask_ = np.where(mask)[0]
+                    mask_ = np.where(mask[0])[0]
 
                 else:
 
