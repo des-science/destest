@@ -255,7 +255,7 @@ class H5Source(SourceParser):
 
     def open( self ):
 
-            self.hdf = h5py.File(self.params['filename'], mode = 'r+')
+            self.hdf = h5py.File(self.params['filename'], mode = 'r')
 
     def read_direct( self, group, table, col):
         print 'READING FROM HDF5 FILE: group = ',group,' table = ',table,' col = ',col
