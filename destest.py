@@ -443,7 +443,7 @@ class Selector(object):
             save_obj( [mask, mask_], mask_file )
 
         if use_snmm:
-            print 'using snmm'
+            # print 'using snmm'
             self.mask_ = snmm.createArray((len(mask_),), dtype=np.int64)
             snmm.getArray(self.mask_)[:] = mask_[:]
             mask_ = None
@@ -466,18 +466,18 @@ class Selector(object):
 
         # x at this point is the full column
         x = self.source.read(col=col, nosheared=nosheared)
-        print 'get_col length',len(x)
+        # print 'get_col length',len(x)
 
         # trim and return
         for i in range(len(x)):
             x[i] = x[i][get_array(self.mask_)]
-            print 'get_col length i',len(x[i])
+            # print 'get_col length i',len(x[i])
         if uncut:
             return x
 
         for i in range(len(x)):
             x[i] = x[i][get_array(self.mask[i])]
-            print 'get_col length2 i',len(x[i])
+            # print 'get_col length2 i',len(x[i])
         return x
 
     def get_masked( self, x, mask ):
@@ -670,8 +670,8 @@ class MetaCalib(Calibrator):
             return 0.
 
         Rs /= 2.*self.params['dg']
-        print 'Rs',Rs,Rs*2.*self.params['dg'] 
-        print 'check what dg is used....'
+        # print 'Rs',Rs,Rs*2.*self.params['dg'] 
+        # print 'check what dg is used....'
 
         return Rs
 
