@@ -394,14 +394,17 @@ class Selector(object):
                     tmp = np.arange(self.source.size)
                     select = self.source.read(full_path=self.params['select_path'])
                     mask.append( np.in1d(tmp,select,assume_unique=True) )
-                    select = self.source.read(full_path=self.params['select_path']+'_1p')
-                    mask.append( np.in1d(tmp,select,assume_unique=True) )
-                    select = self.source.read(full_path=self.params['select_path']+'_1m')
-                    mask.append( np.in1d(tmp,select,assume_unique=True) )
-                    select = self.source.read(full_path=self.params['select_path']+'_2p')
-                    mask.append( np.in1d(tmp,select,assume_unique=True) )
-                    select = self.source.read(full_path=self.params['select_path']+'_2m')
-                    mask.append( np.in1d(tmp,select,assume_unique=True) )
+                    try:
+                        select = self.source.read(full_path=self.params['select_path']+'_1p')
+                        mask.append( np.in1d(tmp,select,assume_unique=True) )
+                        select = self.source.read(full_path=self.params['select_path']+'_1m')
+                        mask.append( np.in1d(tmp,select,assume_unique=True) )
+                        select = self.source.read(full_path=self.params['select_path']+'_2p')
+                        mask.append( np.in1d(tmp,select,assume_unique=True) )
+                        select = self.source.read(full_path=self.params['select_path']+'_2m')
+                        mask.append( np.in1d(tmp,select,assume_unique=True) )
+                    except:
+                        print 'No sheared select_path ',self.params['select_path']
                     tmp = None
 
                     mask_ = np.zeros(self.source.size, dtype=bool)
