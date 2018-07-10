@@ -392,8 +392,11 @@ class Selector(object):
                     mask = []
 
                     tmp = np.zeros(self.source.size,dtype=bool)
+                    print tmp
                     select = self.source.read(full_path=self.params['select_path'])
+                    print len(select),select
                     tmp[select]=True
+                    print np.sum(tmp),tmp
                     mask.append( tmp )
                     try:
                         tmp = np.zeros(self.source.size,dtype=bool)
