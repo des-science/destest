@@ -417,7 +417,6 @@ class Selector(object):
                         mask.append( tmp )
                     except:
                         print 'No sheared select_path ',self.params['select_path']
-                    tmp = None
 
                     mask_ = np.zeros(self.source.size, dtype=bool)
                     for imask in mask:
