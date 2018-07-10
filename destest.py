@@ -418,10 +418,13 @@ class Selector(object):
                     except:
                         print 'No sheared select_path ',self.params['select_path']
 
+                    print np.sum(mask[0])
                     mask_ = np.zeros(self.source.size, dtype=bool)
                     for imask in mask:
                         mask_ = mask_ | imask
+                    print np.sum(mask_)
                     mask_ = np.where(mask_)[0]
+                    print mask_
 
                     # Cut down masks to the limiting mask
                     # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
