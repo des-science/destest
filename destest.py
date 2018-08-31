@@ -393,6 +393,7 @@ class Selector(object):
 
                     tmp = np.zeros(self.source.size,dtype=bool)
                     select = self.source.read(full_path=self.params['select_path'])
+                    print 'destest',self.params['filename'],self.params['select_path'],len(tmp),len(select)
                     tmp[select]=True
                     mask.append( tmp )
                     try:
@@ -424,6 +425,8 @@ class Selector(object):
                     # Its important to note that all operations will assume that data has been trimmed to satisfy selector.mask_ from now on
                     for i in range(len(mask)):
                         mask[i] = mask[i][mask_]
+
+                    print 'end mask',mask_,mask[0]
 
             else:
 
@@ -479,16 +482,24 @@ class Selector(object):
         x = self.source.read(col=col, nosheared=nosheared)
         # print 'get_col length',len(x)
 
+        if col=='zmean_sof':
+            print 'inside get_col'
+            print x[0]
+
         # trim and return
         for i in range(len(x)):
             x[i] = x[i][get_array(self.mask_)]
             # print 'get_col length i',len(x[i])
+        if col=='zmean_sof':
+            print x[0]
         if uncut:
             return x
 
         for i in range(len(x)):
             x[i] = x[i][get_array(self.mask[i])]
             # print 'get_col length2 i',len(x[i])
+        if col=='zmean_sof':
+            print x[0]
         return x
 
     def get_masked( self, x, mask ):
