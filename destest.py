@@ -582,7 +582,7 @@ class Calibrator(object):
             ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
             # Get a selection response
             Rs = self.select_resp(col,mask,w,ws)
-            print 'rs',Rg,Rs
+            print 'Rs',col,np.mean(Rg),Rs
             R  = Rg + Rs
             if return_wRg:
                 Rg1 = self.selector.get_masked(get_array(self.Rg1),mask)
@@ -686,11 +686,11 @@ class MetaCalib(Calibrator):
                 eSm = np.sum(get_array(self.e1)[mask_[2]][mask[2]]*w[2])
             Rs = eSp/ws[1] - eSm/ws[2]
         elif col == self.params['e'][1]:
-            eSp = np.sum(get_array(self.e1)[mask_[3]]*w[3])
-            eSm = np.sum(get_array(self.e1)[mask_[4]]*w[4])
+            eSp = np.sum(get_array(self.e2)[mask_[3]]*w[3])
+            eSm = np.sum(get_array(self.e2)[mask_[4]]*w[4])
             if mask is not None:
-                eSp = np.sum(get_array(self.e1)[mask_[3]][mask[3]]*w[3])
-                eSm = np.sum(get_array(self.e1)[mask_[4]][mask[4]]*w[4])
+                eSp = np.sum(get_array(self.e2)[mask_[3]][mask[3]]*w[3])
+                eSm = np.sum(get_array(self.e2)[mask_[4]][mask[4]]*w[4])
             Rs = eSp/ws[3] - eSm/ws[4]
         else:
             return 0.
