@@ -582,6 +582,7 @@ class Calibrator(object):
             ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
             # Get a selection response
             Rs = self.select_resp(col,mask,w,ws)
+            print 'rs',Rg,Rs
             R  = Rg + Rs
             if return_wRg:
                 Rg1 = self.selector.get_masked(get_array(self.Rg1),mask)
