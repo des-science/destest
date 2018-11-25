@@ -1087,11 +1087,11 @@ class GeneralStats(object):
                 if col not in self.source.cols:
                     raise NameError(col + ' not in source.')
         else:
-            self.split = self.source.cols
+            self.params['general_stats'] = self.source.cols
 
         self.calibrator = calibrator
         self.splitter   = Splitter(params,selector,calibrator,source,nbins=1)
-        self.split      = split
+        self.split      = self.params['general_stats']
         self.step       = 0
 
         # 'step' and this separate call is meant as a placeholder for potential parallelisation
