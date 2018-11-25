@@ -1087,7 +1087,7 @@ class GeneralStats(object):
                 if col not in self.source.cols:
                     raise NameError(col + ' not in source.')
         else:
-            self.params['general_stats'] = self.source.cols
+            self.split = self.source.cols
 
         self.calibrator = calibrator
         self.splitter   = Splitter(params,selector,calibrator,source,nbins=1)
