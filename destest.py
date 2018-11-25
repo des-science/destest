@@ -116,6 +116,14 @@ class Testsuite(object):
 
             self.params     = param_file
 
+        for x in self.params:
+            if self.params[x] == 'None':
+                self.params[x] = None
+            if self.params[x] == 'False':
+                self.params[x] = False
+            if self.params[x] == 'True':
+                self.params[x] = True
+
         # Set up classes that manage data
         # Source is an HDF5 file.
         if self.params['source'] == 'hdf5':
