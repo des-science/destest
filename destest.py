@@ -1135,7 +1135,7 @@ class Hist1D(object):
 
         self.calibrator = calibrator
         self.splitter   = Splitter(params,selector,calibrator,source,nbins=1)
-        self.split      = split
+        self.split      = self.params['hist_1d']
         self.step       = 0
 
         if not self.params['plot_only']:
