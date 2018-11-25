@@ -400,8 +400,7 @@ class FITSSource(SourceParser):
         # For both metacal and classic files, output is a list of columns (possible of length 1)
         for i,t in enumerate(self.params['table']):
             if i==0:
-                if col not in self.fits[t].keys():
-                    print t,col,self.fits[t].keys()
+                if col not in self.cols:
                     raise NameError('Col '+col+' not found in fits file.')
             else:
                 if nosheared:
@@ -410,7 +409,7 @@ class FITSSource(SourceParser):
                 if col not in self.sheared_cols:
                     print col,'not in sheared cols'
                     continue
-                if col not in self.fits[t].keys():
+                if col not in self.fits[t][0].dtype.names:
                     print col,'not in table keys'
                     raise NameError('Col '+col+' not found in sheared table '+t+' of fits file.')
 
