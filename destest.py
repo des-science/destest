@@ -121,6 +121,10 @@ class Testsuite(object):
         if self.params['source'] == 'hdf5':
             self.source  = H5Source(self.params)
 
+        # Source is a FITS file.
+        if self.params['source'] == 'fits':
+            self.source  = FITSSource(self.params)
+
         # Source is a desdm table
         elif self.params['source'] == 'desdm':
             self.source  = DESDMSource(self.params)
@@ -321,6 +325,100 @@ class H5Source(SourceParser):
 
         if hasattr(self,'hdf'):
             self.hdf.close()
+
+
+class FITSSource(SourceParser):
+    """
+    A class to manage the actual reading or downloading of data from HDF5 sources. 
+    """
+
+    def __init__( self, params ):
+
+        super(FITSSource,self).__init__(params)
+
+        if 'filename' not in self.params.keys():
+            raise NameError('Must provide a filename for fits source.')
+        if 'table' not in self.params.keys():
+            raise NameError('Must specify table name for fits file.')
+        if type(self.params['table']) is not list:
+            raise TypeError('Table must be provided as a list of names (even a list of one).')
+
+        self.fits = fio.FITS(self.params['filename'])
+        # save all column names
+        self.cols = self.fits[self.params['table'][0]][0].dtype.names
+        # save length of tables
+        self.size = self.fits[self.params['table'][0]].read_header()['NAXIS2']
+
+        # No metacal sheared capability currently
+
+        self.close()
+
+    def open( self ):
+
+            self.fits = fio.FITS(self.params['filename'])
+
+    def read_direct( self, group, table, col):
+        # print 'READING FROM HDF5 FILE: group = ',group,' table = ',table,' col = ',col
+        self.open() #attempting this
+        return self.fits[table][col][:] 
+        self.close()
+
+    def read( self, col=None, rows=None, nosheared=False ):
+
+        self.open()
+
+        def add_out( table, rows, col ):
+            """
+            Extract a portion of a column from the file.
+            """
+
+            if rows is not None:
+                if hasattr(rows,'__len__'):
+                    if len(rows==2):
+                        out = self.fits[table][col][rows[0]:rows[1]] 
+                else:
+                    out = self.fits[table][col][rows] 
+            else:
+                out = self.fits[table][col][:] 
+
+            return out
+
+        if col is None:
+            raise NameError('Must specify column.')
+
+        out = []
+        # For metacal file, loop over tables and return list of 5 unsheared+sheared values for column (or just unsheraed if 'nosheared' is true or there doesn't exist sheared values for this column) 
+        # For classic file, get single column.
+        # For both metacal and classic files, output is a list of columns (possible of length 1)
+        for i,t in enumerate(self.params['table']):
+            if i==0:
+                if col not in self.fits[t].keys():
+                    print t,col,self.fits[t].keys()
+                    raise NameError('Col '+col+' not found in fits file.')
+            else:
+                if nosheared:
+                    print 'skipping sheared columns for',col
+                    continue
+                if col not in self.sheared_cols:
+                    print col,'not in sheared cols'
+                    continue
+                if col not in self.fits[t].keys():
+                    print col,'not in table keys'
+                    raise NameError('Col '+col+' not found in sheared table '+t+' of fits file.')
+
+            if rows is not None:
+                out.append( add_out(t,rows,col) )
+            else:
+                out.append( add_out(t,None,col) )
+
+        self.close()
+
+        return out
+
+    def close( self ):
+
+        if hasattr(self,'fits'):
+            self.fits.close()
 
 class DESDMSource(SourceParser):
     """
