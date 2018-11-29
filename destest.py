@@ -1003,10 +1003,17 @@ class LinearSplit(object):
         else:
             self.params['split_mean'] = self.source.cols
 
+        if self.params['split_x'] is not None:
+            for col in self.params['split_x']:
+                if col not in self.source.cols:
+                    raise NameError(col + ' not in source.')
+        else:
+            self.params['split_x'] = self.source.cols
+
         self.calibrator = calibrator
         self.splitter   = Splitter(params,selector,calibrator,source,nbins=nbins)
-        self.split_x    = split_x
-        self.split_y    = split_y
+        self.split_x    = self.params['split_x']
+        self.split_y    = self.params['split_mean']
         self.step       = 0
 
         if not self.params['plot_only']:
