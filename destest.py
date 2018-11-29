@@ -68,7 +68,10 @@ def file_path( params, subdir, name, var=None, var2=None, var3=None, ftype='txt'
     else:
         if not os.path.exists(os.path.join(params['output'],params['param_file'][:params['param_file'].index('.')])):
             os.mkdir(os.path.join(params['output'],params['param_file'][:params['param_file'].index('.')]))
-        os.mkdir(fpath)
+        try:
+            os.mkdir(fpath)
+        except:
+            pass
         params['output_exists'] = True
 
     return os.path.join(fpath,name)
@@ -1203,7 +1206,7 @@ class Hist2D(object):
 
         self.calibrator = calibrator
         self.splitter   = Splitter(params,selector,calibrator,source,nbins=1)
-        self.split      = split
+        self.split      = self.params['hist_2d']
         self.step       = 0
 
         # 'step' and this separate call is meant as a placeholder for potential parallelisation
