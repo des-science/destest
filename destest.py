@@ -174,7 +174,7 @@ class Testsuite(object):
             test.plot()
 
         if 'hist_2d' in self.params:
-            Hist2D(self.params,self.selector,self.calibrator,self.source,self.params['hist_2d'])
+            test = Hist2D(self.params,self.selector,self.calibrator,self.source,self.params['hist_2d'])
             test.plot()
 
         if 'split_mean' in self.params:
