@@ -1245,6 +1245,8 @@ class Hist2D(object):
 
         for x in self.split:
             for y in self.split:
+                if x==y:
+                    continue                
                 fpath = file_path(self.params,'test_output','hist_2d',var=x,var2=y,var3='edges')
                 edges = np.loadtxt(fpath)
                 fpath = file_path(self.params,'test_output','hist_2d',var=x,var2=y,var3='bins')
