@@ -175,6 +175,7 @@ class Testsuite(object):
 
         if 'hist_2d' in self.params:
             Hist2D(self.params,self.selector,self.calibrator,self.source,self.params['hist_2d'])
+            test.plot()
 
         if 'split_mean' in self.params:
 
@@ -1216,8 +1217,9 @@ class Hist2D(object):
         self.split      = self.params['hist_2d']
         self.step       = 0
 
-        # 'step' and this separate call is meant as a placeholder for potential parallelisation
-        self.iter()
+        if not self.params['plot_only']:
+            # 'step' and this separate call is meant as a placeholder for potential parallelisation
+            self.iter()
 
     def iter( self ):
         """
@@ -1239,6 +1241,41 @@ class Hist2D(object):
                 write_table(self.params, np.array([xedges,yedges]).T,'test_output','hist_2d',var=x,var2=y,var3='edges')
                 write_table(self.params, bins, 'test_output','hist_2d',var=x,var2=y,var3='bins' )
 
+    def plot( self ):
+
+        for x in self.split:
+            for y in self.split:
+                fpath = file_path(self.params,'test_output','hist_2d',var=x,var2=y,var3='edges')
+                edges = np.loadtxt(fpath)
+                fpath = file_path(self.params,'test_output','hist_2d',var=x,var2=y,var3='bins')
+                bins = np.loadtxt(fpath)
+                plt.figure()
+                if x in self.params['plot_log_x']:
+                    edges[edges<0] = -np.log(-edges[edges<0])
+                    edges[edges>0] = np.log(edges[edges>0])
+                plt.imshow(bins,interpolation='none')
+                plt.minorticks_on()
+                plt.xlabel(x)
+                plt.ylabel(y)
+                plt.colorbar()
+                plt.tight_layout()
+                fpath = file_path(self.params,'test_output','hist_2d',var=x,ftype='png')
+                plt.savefig(fpath, bbox_inches='tight')
+                plt.close()
+
+                plt.figure()
+                if x in self.params['plot_log_x']:
+                    edges[edges<0] = -np.log(-edges[edges<0])
+                    edges[edges>0] = np.log(edges[edges>0])
+                plt.imshow(bins,norm=LogNorm())
+                plt.minorticks_on()
+                plt.xlabel(x)
+                plt.ylabel(y)
+                plt.colorbar()
+                plt.tight_layout()
+                fpath = file_path(self.params,'test_output','hist_2d_log',var=x,ftype='png')
+                plt.savefig(fpath, bbox_inches='tight')
+                plt.close()
 
 def mean( col, x, calibrator, mask=None, return_std=True, return_rms=False ):
     """
