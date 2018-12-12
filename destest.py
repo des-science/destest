@@ -1261,7 +1261,7 @@ class Hist2D(object):
                 plt.ylabel(y)
                 plt.colorbar()
                 plt.tight_layout()
-                fpath = file_path(self.params,'test_output','hist_2d',var=x,ftype='png')
+                fpath = file_path(self.params,'test_output','hist_2d',var=x,var2=y,ftype='png')
                 plt.savefig(fpath, bbox_inches='tight')
                 plt.close()
 
@@ -1275,7 +1275,7 @@ class Hist2D(object):
                 plt.ylabel(y)
                 plt.colorbar()
                 plt.tight_layout()
-                fpath = file_path(self.params,'test_output','hist_2d_log',var=x,ftype='png')
+                fpath = file_path(self.params,'test_output','hist_2d_log',var=x,var2=y,ftype='png')
                 plt.savefig(fpath, bbox_inches='tight')
                 plt.close()
 
