@@ -688,8 +688,6 @@ class Calibrator(object):
         print '-----',col, self.params['e']
 
         if col in self.params['e']:
-            if return_wRg:
-                return ((Rg1+Rg2)/2.)*w[0]
             ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
             # Get a selection response
             Rs = self.select_resp(col,mask,w,ws)
@@ -703,6 +701,8 @@ class Calibrator(object):
                 else:
                     Rs2 = self.select_resp(self.params['e'][0],mask,w,ws)
                 return ((Rg1+Rg2)/2.+(Rs+Rs2)/2.)*w[0]
+            if return_wRg:
+                return ((Rg1+Rg2)/2.)*w[0]
             elif return_full:
                 return R,c,w_
             else:
