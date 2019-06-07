@@ -685,13 +685,15 @@ class Calibrator(object):
         print '-----',col, self.params['e']
 
         if col in self.params['e']:
-            if return_wRg:
-                return ((Rg1+Rg2)/2.)*w[0]
             ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
             # Get a selection response
             Rs = self.select_resp(col,mask,w,ws)
             print 'Rs',col,np.mean(Rg),Rs
             R  = Rg + Rs
+            if return_wRg:
+                Rg1 = self.selector.get_masked(get_array(self.Rg1),mask)
+                Rg2 = self.selector.get_masked(get_array(self.Rg2),mask)
+                return ((Rg1+Rg2)/2.)*w[0]
             if return_wRgS:
                 Rg1 = self.selector.get_masked(get_array(self.Rg1),mask)
                 Rg2 = self.selector.get_masked(get_array(self.Rg2),mask)
