@@ -25,12 +25,10 @@ import matplotlib.gridspec as gridspec
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import pylab
 
-
 if sys.version_info[0] == 3:
     string_types = str,
 else:
     string_types = basestring,
-
 
 def get_array( array ):
     if use_snmm:
@@ -41,7 +39,6 @@ def get_array( array ):
 def save_obj( obj, name ):
     with open(name, 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-
 
 def load_obj( name ):
     with open(name, 'rb') as f:
@@ -479,7 +476,7 @@ class Selector(object):
         mask = None
 
         # Setup mask file cache path.
-        mask_file = file_path(self.params,'cache','mask',ftype='pickle')
+        mask_file = file_path(self.params,'cache',self.params['name']+'mask',ftype='pickle')
         if self.params['load_cache']:
             # if mask cache exists, read mask from pickle and skip parsing yaml selection conditions.
 
@@ -592,9 +589,9 @@ class Selector(object):
         x = self.source.read(col=col, nosheared=nosheared)
         # print 'get_col length',len(x)
 
-        if col=='zmean_sof':
-            print 'inside get_col'
-            print x[0]
+        # if col=='zmean_sof':
+        #     print 'inside get_col'
+        #     print x[0]
 
         # trim and return
         for i in range(len(x)):
@@ -933,7 +930,7 @@ class Splitter(object):
         """
 
         # Check if cache file exists and use it if you've requested that.
-        sort_file = file_path(self.params,'cache','sort',var=col,ftype='pickle')
+        sort_file = file_path(self.params,'cache',self.params['name']+'sort',var=col,ftype='pickle')
         if self.params['load_cache']:
             print 'loading split sort cache',sort_file
 
