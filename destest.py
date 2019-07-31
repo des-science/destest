@@ -648,6 +648,26 @@ class Selector(object):
 
         return self.source.read_direct( self.params['group'].replace('catalog','index'), self.params['table'][0], 'match_gold')
 
+    def get_tuple_col( self, col ):
+        """
+        Force a tuple return of sheared selections of an unsheared quantity (like coadd_object_id).
+        """
+
+        # x at this point is the full column
+        x = self.source.read(col=col, nosheared=True)
+
+        x = [x]*5
+
+        # trim and return
+        for i in range(len(x)):
+            x[i] = x[i][get_array(self.mask_)]
+
+        for i in range(len(x)):
+            x[i] = x[i][get_array(self.mask[i])]
+
+        return x
+
+
 
 class Calibrator(object):
     """
