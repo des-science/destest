@@ -656,7 +656,7 @@ class Selector(object):
         # x at this point is the full column
         x = self.source.read(col=col, nosheared=True)
 
-        x = [x]*5
+        x = x*5
 
         # trim and return
         for i in range(len(x)):
