@@ -25,6 +25,18 @@ import matplotlib.gridspec as gridspec
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import pylab
 
+from __future__ import division
+from __future__ import print_function
+
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from past.builtins import basestring
+from builtins import object
+from past.utils import old_div
+
+
 if sys.version_info[0] == 3:
     string_types = str,
 else:
@@ -199,7 +211,7 @@ class Testsuite(object):
         """
 
         fpath = file_path(self.params,'',self.params['param_file'][:self.params['param_file'].index('.')],ftype='yaml')
-        print 'saving input yaml to: '+fpath
+        print('saving input yaml to: '+fpath)
         with open(fpath, 'w') as outfile:
             yaml.dump(self.params, outfile, default_flow_style=False)
 
@@ -258,7 +270,7 @@ class H5Source(SourceParser):
             if len(self.params['table'])>1:
                 # save sheared column names
                 self.sheared_cols = self.hdf[self.params['group']][self.params['table'][1]].keys()
-                print self.sheared_cols
+                print(self.sheared_cols)
 
         else:
 
@@ -271,7 +283,7 @@ class H5Source(SourceParser):
             self.hdf = h5py.File(self.params['filename'], mode = 'r')
 
     def read_direct( self, group, table, col):
-        # print 'READING FROM HDF5 FILE: group = ',group,' table = ',table,' col = ',col
+        # print('READING FROM HDF5 FILE: group = ',group,' table = ',table,' col = ',col)
         self.open() #attempting this
         return self.hdf[group][table][col][:] 
         self.close()
@@ -308,17 +320,17 @@ class H5Source(SourceParser):
         for i,t in enumerate(self.params['table']):
             if i==0:
                 if col not in self.hdf[self.params['group']][t].keys():
-                    print self.params['group'],t,col,self.hdf[self.params['group']][t].keys()
+                    print(self.params['group'],t,col,self.hdf[self.params['group']][t].keys())
                     raise NameError('Col '+col+' not found in hdf5 file.')
             else:
                 if nosheared:
-                    print 'skipping sheared columns for',col
+                    print('skipping sheared columns for',col)
                     continue
                 if col not in self.sheared_cols:
-                    print col,'not in sheared cols'
+                    print(col,'not in sheared cols')
                     continue
                 if col not in self.hdf[self.params['group']][t].keys():
-                    print col,'not in table keys'
+                    print(col,'not in table keys')
                     raise NameError('Col '+col+' not found in sheared table '+t+' of hdf5 file.')
 
             if rows is not None:
@@ -367,7 +379,7 @@ class FITSSource(SourceParser):
             self.fits = fio.FITS(self.params['filename'])
 
     def read_direct( self, group, table, col):
-        # print 'READING FROM HDF5 FILE: group = ',group,' table = ',table,' col = ',col
+        # print('READING FROM HDF5 FILE: group = ',group,' table = ',table,' col = ',col)
         self.open() #attempting this
         return self.fits[table][col][:] 
         self.close()
@@ -405,13 +417,13 @@ class FITSSource(SourceParser):
                     raise NameError('Col '+col+' not found in fits file.')
             else:
                 if nosheared:
-                    print 'skipping sheared columns for',col
+                    print('skipping sheared columns for',col)
                     continue
                 if col not in self.sheared_cols:
-                    print col,'not in sheared cols'
+                    print(col,'not in sheared cols')
                     continue
                 if col not in self.fits[t][0].dtype.names:
-                    print col,'not in table keys'
+                    print(col,'not in table keys')
                     raise NameError('Col '+col+' not found in sheared table '+t+' of fits file.')
 
             if rows is not None:
@@ -482,15 +494,15 @@ class Selector(object):
 
             if os.path.exists(mask_file):
                 mask, mask_ = load_obj(mask_file)
-                print 'loaded mask cache'
+                print('loaded mask cache')
 
         if mask is None:
 
             if 'select_path' in self.params:
-                print 'using select_path for mask'
+                print('using select_path for mask')
 
                 if (self.params['select_path'] is None)|(self.params['select_path'].lower() == 'none'):
-                    print 'None select path - ignoring selection'
+                    print('None select path - ignoring selection')
                     mask = [np.ones(self.source.size,dtype=bool)]
                     mask_ = np.where(mask[0])[0]
 
@@ -500,7 +512,7 @@ class Selector(object):
 
                     tmp = np.zeros(self.source.size,dtype=bool)
                     select = self.source.read(full_path=self.params['select_path'])
-                    print 'destest',self.params['filename'],self.params['select_path'],len(tmp),len(select)
+                    print('destest',self.params['filename'],self.params['select_path'],len(tmp),len(select))
                     tmp[select]=True
                     mask.append( tmp )
                     try:
@@ -521,7 +533,7 @@ class Selector(object):
                         tmp[select]=True
                         mask.append( tmp )
                     except:
-                        print 'No sheared select_path ',self.params['select_path']
+                        print('No sheared select_path ',self.params['select_path'])
 
                     mask_ = np.zeros(self.source.size, dtype=bool)
                     for imask in mask:
@@ -533,7 +545,7 @@ class Selector(object):
                     for i in range(len(mask)):
                         mask[i] = mask[i][mask_]
 
-                    print 'end mask',mask_,mask[0]
+                    print('end mask',mask_,mask[0])
 
             else:
 
@@ -564,7 +576,7 @@ class Selector(object):
             save_obj( [mask, mask_], mask_file )
 
         if use_snmm:
-            # print 'using snmm'
+            # print('using snmm')
             self.mask_ = snmm.createArray((len(mask_),), dtype=np.int64)
             snmm.getArray(self.mask_)[:] = mask_[:]
             mask_ = None
@@ -587,26 +599,26 @@ class Selector(object):
 
         # x at this point is the full column
         x = self.source.read(col=col, nosheared=nosheared)
-        # print 'get_col length',len(x)
+        # print('get_col length',len(x))
 
         # if col=='zmean_sof':
-        #     print 'inside get_col'
-        #     print x[0]
+        #     print('inside get_col')
+        #     print(x[0])
 
         # trim and return
         for i in range(len(x)):
             x[i] = x[i][get_array(self.mask_)]
-            # print 'get_col length i',len(x[i])
+            # print('get_col length i',len(x[i]))
         if col=='zmean_sof':
-            print x[0]
+            print(x[0])
         if uncut:
             return x
 
         for i in range(len(x)):
             x[i] = x[i][get_array(self.mask[i])]
-            # print 'get_col length2 i',len(x[i])
+            # print('get_col length2 i',len(x[i])
         if col=='zmean_sof':
-            print x[0]
+            print(x[0])
         return x
 
     def get_masked( self, x, mask ):
@@ -702,13 +714,13 @@ class Calibrator(object):
             Rg = self.selector.get_masked(get_array(self.Rg2),mask)
             c = self.selector.get_masked(self.c2,mask)
 
-        print '-----',col, self.params['e']
+        print('-----',col, self.params['e'])
 
         if col in self.params['e']:
             ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
             # Get a selection response
             Rs = self.select_resp(col,mask,w,ws)
-            print 'Rs',col,np.mean(Rg),Rs
+            print('Rs',col,np.mean(Rg),Rs)
             R  = Rg + Rs
             if return_wRg:
                 Rg1 = self.selector.get_masked(get_array(self.Rg1),mask)
@@ -826,8 +838,8 @@ class MetaCalib(Calibrator):
             return 0.
 
         Rs /= 2.*self.params['dg']
-        # print 'Rs',Rs,Rs*2.*self.params['dg'] 
-        # print 'check what dg is used....'
+        # print('Rs',Rs,Rs*2.*self.params['dg'] 
+        # print('check what dg is used....'
 
         return Rs
 
@@ -906,7 +918,7 @@ class Splitter(object):
 
         # If asking for a bin selection, find the appropriate mask and return that part of the x array.
         start,end = self.get_bin_edges(xbin)
-        # print 'returning x bin',start,end
+        # print('returning x bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))] # np.s_ creates an array slice 'object' that can be passed to functions
         mask      = [ order_[mask_] for order_,mask_ in tuple(zip(self.order,mask)) ]
         if return_mask:
@@ -931,7 +943,7 @@ class Splitter(object):
                 self.y[i] = y_[self.order[i]]
             self.y = self.y[0]
 
-        print 'ysize',len(self.y),self.y.nbytes
+        print('ysize',len(self.y),self.y.nbytes)
 
         # If not asking for a bin selection, return
         if xbin is None:
@@ -939,7 +951,7 @@ class Splitter(object):
 
         # If asking for a bin selection, find the appropriate mask and return that part of the y array.
         start,end = self.get_bin_edges(xbin)
-        # print 'returning y bin',start,end
+        # print('returning y bin',start,end
         mask      = [np.s_[start_:end_] for start_,end_ in tuple(zip(start,end))]
         mask      = [ order_[mask_] for order_,mask_ in tuple(zip(self.order,mask)) ]
         if return_mask:
@@ -954,14 +966,14 @@ class Splitter(object):
         # Check if cache file exists and use it if you've requested that.
         sort_file = file_path(self.params,'cache',self.params['name']+'sort',var=col,ftype='pickle')
         if self.params['load_cache']:
-            print 'loading split sort cache',sort_file
+            print('loading split sort cache',sort_file)
 
             if os.path.exists(sort_file):
                 self.order,self.x = load_obj(sort_file)
 
         # Cache file doesn't exist or you're remaking it
         if self.order is None:
-            print 'split sort cache not found'
+            print('split sort cache not found')
             # Read x
             self.x     = self.selector.get_col(col)
             # save the index order to sort the x array for more efficient binning
@@ -1048,7 +1060,7 @@ class LinearSplit(object):
         """
 
         for x in self.split_x:
-            print 'x col',x
+            print('x col',x)
             n     = []
             xmean = []
             xlow  = []
@@ -1064,7 +1076,7 @@ class LinearSplit(object):
             for y in self.split_y:
                 if x==y:
                     continue
-                print 'y col',y
+                print('y col',y)
                 ymean = []
                 ystd  = []
                 for xbin in range(self.splitter.bins):
@@ -1077,7 +1089,7 @@ class LinearSplit(object):
 
                 # Save results
                 table = np.array([n,xlow,xmean,xhigh,ymean,ystd]).T
-                print 'mean',table
+                print('mean',table)
                 write_table(self.params, table,'test_output','linear_split',var=x,var2=y,var3=str(self.splitter.bins))
 
     def plot( self ):
@@ -1137,7 +1149,7 @@ class GeneralStats(object):
         with open(fpath,'w') as f:
             f.write('col min max mean std rms\n')
             for i,x in enumerate(self.split):
-                print 'x col',x
+                print('x col',x)
                 # get x array in bin xbin
                 xval = self.splitter.get_x(x,0)
                 min_ = xval[0]
@@ -1180,7 +1192,7 @@ class Hist1D(object):
         """
 
         for i,x in enumerate(self.split):
-            print 'x col',x
+            print('x col',x)
             # get x array in bin xbin
             self.splitter.get_x(x)
             bins,edges = np.histogram(self.splitter.x,bins=self.params['hist_bins'])
@@ -1248,13 +1260,13 @@ class Hist2D(object):
         """
 
         for x in self.split:
-            print 'x col',x
+            print('x col',x)
             # get x array in bin xbin
             self.splitter.get_x(x)
             for y in self.split:
                 if x==y:
                     continue
-                print 'y col',y
+                print('y col',y)
                 self.splitter.get_y(y)
                 bins,xedges,yedges = np.histogram2d(self.splitter.x,self.splitter.y,bins=self.params['hist_bins'])
 
@@ -1310,7 +1322,7 @@ def mean( col, x, calibrator, mask=None, return_std=True, return_rms=False ):
         R,c,w = calibrator.calibrate(col)
     else:
         R,c,w = calibrator.calibrate(col,mask=mask)
-    print 'Rcw',col,R,c,w
+    print('Rcw',col,R,c,w)
 
     # do the calculation
     if R is not None:
