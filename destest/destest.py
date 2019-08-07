@@ -3,7 +3,8 @@ from __future__ import division, print_function
 import numpy as np
 import fitsio as fio
 import h5py
-import cPickle as pickle
+import six; from six.moves import cPickle as pickle
+#import cPickle as pickle
 import yaml
 import os
 import sys
@@ -13,7 +14,7 @@ import cProfile, pstats
 from multiprocessing import Pool
 # from mpi4py import MPI
 try:
-    from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
+    from sharedNumpyMemManager import SharedNumpyMemManager as snmm
     use_snmm = True
 except:
     use_snmm = False
@@ -218,7 +219,7 @@ class Testsuite(object):
 
 class SourceParser(object):
     """
-    A class to manage the actual reading or downloading of data from external sources. 
+    A class to manage the actual reading or downloading of data from external sources.
     Initiate with a testsuite param dictionary.
     To use later: source_parser.read(...). All the messy details are hidden.
     """
@@ -239,7 +240,7 @@ class SourceParser(object):
 
 class H5Source(SourceParser):
     """
-    A class to manage the actual reading or downloading of data from HDF5 sources. 
+    A class to manage the actual reading or downloading of data from HDF5 sources.
     """
 
     def __init__( self, params ):
@@ -285,7 +286,7 @@ class H5Source(SourceParser):
     def read_direct( self, group, table, col):
         # print('READING FROM HDF5 FILE: group = ',group,' table = ',table,' col = ',col)
         self.open() #attempting this
-        return self.hdf[group][table][col][:] 
+        return self.hdf[group][table][col][:]
         self.close()
     def read( self, col=None, rows=None, nosheared=False, full_path = None ):
 
@@ -299,11 +300,11 @@ class H5Source(SourceParser):
             if rows is not None:
                 if hasattr(rows,'__len__'):
                     if len(rows==2):
-                        out = self.hdf[self.params['group']][table][col][rows[0]:rows[1]] 
+                        out = self.hdf[self.params['group']][table][col][rows[0]:rows[1]]
                 else:
-                    out = self.hdf[self.params['group']][table][col][rows] 
+                    out = self.hdf[self.params['group']][table][col][rows]
             else:
-                out = self.hdf[self.params['group']][table][col][:] 
+                out = self.hdf[self.params['group']][table][col][:]
 
             return out
 
@@ -314,7 +315,7 @@ class H5Source(SourceParser):
             raise NameError('Must specify column.')
 
         out = []
-        # For metacal file, loop over tables and return list of 5 unsheared+sheared values for column (or just unsheraed if 'nosheared' is true or there doesn't exist sheared values for this column) 
+        # For metacal file, loop over tables and return list of 5 unsheared+sheared values for column (or just unsheraed if 'nosheared' is true or there doesn't exist sheared values for this column)
         # For classic file, get single column.
         # For both metacal and classic files, output is a list of columns (possible of length 1)
         for i,t in enumerate(self.params['table']):
@@ -350,7 +351,7 @@ class H5Source(SourceParser):
 
 class FITSSource(SourceParser):
     """
-    A class to manage the actual reading or downloading of data from HDF5 sources. 
+    A class to manage the actual reading or downloading of data from HDF5 sources.
     """
 
     def __init__( self, params ):
@@ -381,7 +382,7 @@ class FITSSource(SourceParser):
     def read_direct( self, group, table, col):
         # print('READING FROM HDF5 FILE: group = ',group,' table = ',table,' col = ',col)
         self.open() #attempting this
-        return self.fits[table][col][:] 
+        return self.fits[table][col][:]
         self.close()
 
     def read( self, col=None, rows=None, nosheared=False ):
@@ -396,11 +397,11 @@ class FITSSource(SourceParser):
             if rows is not None:
                 if hasattr(rows,'__len__'):
                     if len(rows==2):
-                        out = self.fits[table][col][rows[0]:rows[1]] 
+                        out = self.fits[table][col][rows[0]:rows[1]]
                 else:
-                    out = self.fits[table][col][rows] 
+                    out = self.fits[table][col][rows]
             else:
-                out = self.fits[table][col][:] 
+                out = self.fits[table][col][:]
 
             return out
 
@@ -408,7 +409,7 @@ class FITSSource(SourceParser):
             raise NameError('Must specify column.')
 
         out = []
-        # For metacal file, loop over tables and return list of 5 unsheared+sheared values for column (or just unsheraed if 'nosheared' is true or there doesn't exist sheared values for this column) 
+        # For metacal file, loop over tables and return list of 5 unsheared+sheared values for column (or just unsheraed if 'nosheared' is true or there doesn't exist sheared values for this column)
         # For classic file, get single column.
         # For both metacal and classic files, output is a list of columns (possible of length 1)
         for i,t in enumerate(self.params['table']):
@@ -442,7 +443,7 @@ class FITSSource(SourceParser):
 
 class DESDMSource(SourceParser):
     """
-    A class to manage the actual reading or downloading of data from DESDM sources. 
+    A class to manage the actual reading or downloading of data from DESDM sources.
     """
 
     def __init__( self ):
@@ -451,7 +452,7 @@ class DESDMSource(SourceParser):
 
 class LSSTDMSource(SourceParser):
     """
-    A class to manage the actual reading or downloading of data from LSSTDM sources. 
+    A class to manage the actual reading or downloading of data from LSSTDM sources.
     """
 
     def __init__( self ):
@@ -741,7 +742,7 @@ class Calibrator(object):
                 return R,c,w_
 
         else:
-            
+
             return None,None,w_
 
     def select_resp(self,col,mask,w,ws):
@@ -838,7 +839,7 @@ class MetaCalib(Calibrator):
             return 0.
 
         Rs /= 2.*self.params['dg']
-        # print('Rs',Rs,Rs*2.*self.params['dg'] 
+        # print('Rs',Rs,Rs*2.*self.params['dg']
         # print('check what dg is used....'
 
         return Rs
@@ -901,7 +902,7 @@ class Splitter(object):
 
     def get_x( self, col, xbin=None, return_mask=False ):
         """
-        Get the 'x' column - the column you're binning the data by. 
+        Get the 'x' column - the column you're binning the data by.
         If you haven't already called splitter with this x col, the data will be read from the source and the binning edges will be set up.
         Optionally give a bin number, it will return the portion of the x array that falls in that bin. Can also optionally return the mask for that bin.
         """
@@ -927,7 +928,7 @@ class Splitter(object):
 
     def get_y( self, col, xbin=None, return_mask=False ):
         """
-        Get the 'y' column - the column you're doing stuff with in bins of the x col. If you haven't called splitter.get_x(), an error will be raised, since you haven't defined what you're binning against.  
+        Get the 'y' column - the column you're doing stuff with in bins of the x col. If you haven't called splitter.get_x(), an error will be raised, since you haven't defined what you're binning against.
         If you haven't already called splitter with this y col, the data will be read from the source.
         Optionally give a bin number, it will return the portion of the y array that falls in that bin. Can also optionally return the mask for that bin.
         """
@@ -1279,7 +1280,7 @@ class Hist2D(object):
         for x in self.split:
             for y in self.split:
                 if x==y:
-                    continue                
+                    continue
                 fpath = file_path(self.params,'test_output','hist_2d',var=x,var2=y,var3='edges')
                 edges = np.loadtxt(fpath)
                 fpath = file_path(self.params,'test_output','hist_2d',var=x,var2=y,var3='bins')
@@ -1375,4 +1376,3 @@ if __name__ == "__main__":
     pr.disable()
     ps = pstats.Stats(pr).sort_stats('time')
     ps.print_stats(20)
-
