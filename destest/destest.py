@@ -1,4 +1,4 @@
-from __future__ import division, print_function
+
 
 import numpy as np
 import fitsio as fio
@@ -33,7 +33,7 @@ from future import standard_library
 standard_library.install_aliases()
 from builtins import str
 from builtins import range
-from past.builtins import basestring
+from past.builtins import str
 from builtins import object
 from past.utils import old_div
 
@@ -41,7 +41,7 @@ from past.utils import old_div
 if sys.version_info[0] == 3:
     string_types = str,
 else:
-    string_types = basestring,
+    string_types = str,
 
 def get_array( array ):
     if use_snmm:
@@ -191,7 +191,7 @@ class Testsuite(object):
 
             if self.params['use_mpi'] and (not child):
                 procs = comm.Get_size()
-                iter_list = [self.params['split_x'][i::procs] for i in xrange(procs)]
+                iter_list = [self.params['split_x'][i::procs] for i in range(procs)]
                 calcs = []
                 for proc in range(procs):
                     if iter_list[proc] == []:
@@ -247,30 +247,30 @@ class H5Source(SourceParser):
 
         super(H5Source,self).__init__(params)
 
-        if 'filename' not in self.params.keys():
+        if 'filename' not in list(self.params.keys()):
             raise NameError('Must provide a filename for hdf5 source.')
-        if 'table' not in self.params.keys():
+        if 'table' not in list(self.params.keys()):
             raise NameError('Must specify table name for hdf5 file.')
         if type(self.params['table']) is not list:
             raise TypeError('Table must be provided as a list of names (even a list of one).')
 
-        if 'group' in self.params.keys():
+        if 'group' in list(self.params.keys()):
 
             self.hdf = h5py.File(self.params['filename'], mode = 'r')
             # save all column names
-            self.cols = self.hdf[self.params['group']][self.params['table'][0]].keys()
+            self.cols = list(self.hdf[self.params['group']][self.params['table'][0]].keys())
             # save length of tables
             self.size = self.hdf[self.params['group']][self.params['table'][0]][self.cols[0]].shape[0]
 
             # Loop over tables and save convenience information
             for t in self.params['table']:
-                keys = self.hdf[self.params['group']][t].keys()
+                keys = list(self.hdf[self.params['group']][t].keys())
                 if self.hdf[self.params['group']][t][keys[0]].shape[0] != self.size:
                     raise TypeError('Length of sheared tables in hdf5 file must match length of unsheared table.')
 
             if len(self.params['table'])>1:
                 # save sheared column names
-                self.sheared_cols = self.hdf[self.params['group']][self.params['table'][1]].keys()
+                self.sheared_cols = list(self.hdf[self.params['group']][self.params['table'][1]].keys())
                 print(self.sheared_cols)
 
         else:
@@ -320,8 +320,8 @@ class H5Source(SourceParser):
         # For both metacal and classic files, output is a list of columns (possible of length 1)
         for i,t in enumerate(self.params['table']):
             if i==0:
-                if col not in self.hdf[self.params['group']][t].keys():
-                    print(self.params['group'],t,col,self.hdf[self.params['group']][t].keys())
+                if col not in list(self.hdf[self.params['group']][t].keys()):
+                    print(self.params['group'],t,col,list(self.hdf[self.params['group']][t].keys()))
                     raise NameError('Col '+col+' not found in hdf5 file.')
             else:
                 if nosheared:
@@ -330,7 +330,7 @@ class H5Source(SourceParser):
                 if col not in self.sheared_cols:
                     print(col,'not in sheared cols')
                     continue
-                if col not in self.hdf[self.params['group']][t].keys():
+                if col not in list(self.hdf[self.params['group']][t].keys()):
                     print(col,'not in table keys')
                     raise NameError('Col '+col+' not found in sheared table '+t+' of hdf5 file.')
 
@@ -358,9 +358,9 @@ class FITSSource(SourceParser):
 
         super(FITSSource,self).__init__(params)
 
-        if 'filename' not in self.params.keys():
+        if 'filename' not in list(self.params.keys()):
             raise NameError('Must provide a filename for fits source.')
-        if 'table' not in self.params.keys():
+        if 'table' not in list(self.params.keys()):
             raise NameError('Must specify table name for fits file.')
         if type(self.params['table']) is not list:
             raise TypeError('Table must be provided as a list of names (even a list of one).')
