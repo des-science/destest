@@ -13,7 +13,7 @@ from past.utils import old_div
 import numpy as np
 import fitsio as fio
 import h5py
-import cPickle as pickle
+import Pickle as pickle
 import yaml
 import os
 import sys
