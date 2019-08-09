@@ -1,3 +1,15 @@
+from __future__ import division
+from __future__ import print_function
+
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from past.builtins import basestring
+from builtins import object
+from past.utils import old_div
+
+
 import numpy as np
 import fitsio as fio
 import h5py
@@ -24,17 +36,6 @@ from matplotlib.colors import LogNorm
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import pylab
-
-from __future__ import division
-from __future__ import print_function
-
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
-from past.builtins import basestring
-from builtins import object
-from past.utils import old_div
 
 
 if sys.version_info[0] == 3:
