@@ -6,7 +6,7 @@ import yaml
 import os
 import sys
 import time
-import cProfile, pstats
+#import cProfile, pstats
 # and maybe a bit optimistic...
 from multiprocessing import Pool
 # from mpi4py import MPI
@@ -116,7 +116,7 @@ class Testsuite(object):
         # Read in yaml information
         if isinstance(param_file, string_types):
 
-            self.params     = yaml.load(open(param_file))
+            self.params     = yaml.load(open(param_file), Loader=yaml.FullLoader)
             self.params['param_file'] = param_file
             # Archive yaml file used for results
             self.save_input_yaml()
