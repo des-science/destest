@@ -1,1 +1,1 @@
-import destest
+from .destest import *
