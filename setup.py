@@ -9,5 +9,5 @@ setup(
    author_email='michael.a.troxel@gmail.com',
    url="",
    packages=['destest'],
-   install_requires=['fitsio', 'h5py', 'pickle', 'yaml', 'os', 'sys', 'time', 'cProfile', 'pstats', 'multiprocessing', 'matplotlib'],
+   install_requires=['fitsio', 'h5py', 'pickle', 'yaml', 'time', 'cProfile', 'pstats', 'matplotlib'],
 )
