@@ -764,8 +764,9 @@ class NoCalib(Calibrator):
         self.Rg1 = self.Rg2 = None
         self.c1 = self.c2 = None
         self.w = [1]
-        if ('w' in self.params) & (self.params['w'] is not None):
-            self.w = self.selector.get_col(self.params['w'])
+        if ('w' in self.params):
+            if (self.params['w'] is not None):
+                self.w = self.selector.get_col(self.params['w'])
 
 
 class MetaCalib(Calibrator):
