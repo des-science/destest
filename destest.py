@@ -822,18 +822,20 @@ class MetaCalib(Calibrator):
             mask_ = [ get_array(imask) for imask in self.selector.mask ]
 
         if col == self.params['e'][0]:
-            eSp = np.sum(get_array(self.e1)[mask_[1]]*w[1])
-            eSm = np.sum(get_array(self.e1)[mask_[2]]*w[2])
             if mask is not None:
                 eSp = np.sum((get_array(self.e1)[mask_[1]])[mask[1]]*w[1])
                 eSm = np.sum(get_array(self.e1)[mask_[2]][mask[2]]*w[2])
+            else:
+                eSp = np.sum(get_array(self.e1)[mask_[1]]*w[1])
+                eSm = np.sum(get_array(self.e1)[mask_[2]]*w[2])
             Rs = eSp/ws[1] - eSm/ws[2]
         elif col == self.params['e'][1]:
-            eSp = np.sum(get_array(self.e2)[mask_[3]]*w[3])
-            eSm = np.sum(get_array(self.e2)[mask_[4]]*w[4])
             if mask is not None:
                 eSp = np.sum(get_array(self.e2)[mask_[3]][mask[3]]*w[3])
                 eSm = np.sum(get_array(self.e2)[mask_[4]][mask[4]]*w[4])
+            else:
+                eSp = np.sum(get_array(self.e2)[mask_[3]]*w[3])
+                eSm = np.sum(get_array(self.e2)[mask_[4]]*w[4])
             Rs = eSp/ws[3] - eSm/ws[4]
         else:
             return 0.
