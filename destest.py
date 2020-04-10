@@ -806,7 +806,7 @@ class MetaCalib(Calibrator):
             self.c2 = self.selector.get_col(self.params['c'][1],uncut=True)
         self.w = [1] * 5
         if 'w' in self.params:
-            self.w = self.selector.get_col(self.params['w'])
+            self.w = self.selector.get_col(self.params['w'],uncut=True)
 
     def select_resp(self,col,mask,w,ws):
         """
@@ -1353,12 +1353,12 @@ def mean( col, x, calibrator, mask=None, return_std=True, return_rms=False ):
     return mean,std,rms
 
 
-pr = cProfile.Profile()
+#pr = cProfile.Profile()
 
 if __name__ == "__main__":
     """
     """
-    pr.enable()
+#    pr.enable()
 
     # from mpi_pool import MPIPool
     # comm = MPI.COMM_WORLD
@@ -1372,7 +1372,7 @@ if __name__ == "__main__":
     # pool.close()
 
 
-    pr.disable()
-    ps = pstats.Stats(pr).sort_stats('time')
-    ps.print_stats(20)
+#    pr.disable()
+#    ps = pstats.Stats(pr).sort_stats('time')
+#    ps.print_stats(20)
 
