@@ -1,10 +1,19 @@
+from __future__ import division
+from __future__ import print_function
+
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
+from past.builtins import basestring
+from builtins import object
+from past.utils import old_div
 
 
 import numpy as np
 import fitsio as fio
 import h5py
-import six; from six.moves import cPickle as pickle
-#import cPickle as pickle
+import pickle as pickle
 import yaml
 import os
 import sys
@@ -14,7 +23,7 @@ import cProfile, pstats
 from multiprocessing import Pool
 # from mpi4py import MPI
 try:
-    from sharedNumpyMemManager import SharedNumpyMemManager as snmm
+    from sharedNumpyMemManager import SharedNumpyMemManager as snmm 
     use_snmm = True
 except:
     use_snmm = False
@@ -29,19 +38,10 @@ from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import pylab
 
 
-from future import standard_library
-standard_library.install_aliases()
-from builtins import str
-from builtins import range
-from past.builtins import str
-from builtins import object
-from past.utils import old_div
-
-
 if sys.version_info[0] == 3:
     string_types = str,
 else:
-    string_types = str,
+    string_types = basestring,
 
 def get_array( array ):
     if use_snmm:
@@ -191,7 +191,7 @@ class Testsuite(object):
 
             if self.params['use_mpi'] and (not child):
                 procs = comm.Get_size()
-                iter_list = [self.params['split_x'][i::procs] for i in range(procs)]
+                iter_list = [self.params['split_x'][i::procs] for i in xrange(procs)]
                 calcs = []
                 for proc in range(procs):
                     if iter_list[proc] == []:
@@ -219,7 +219,7 @@ class Testsuite(object):
 
 class SourceParser(object):
     """
-    A class to manage the actual reading or downloading of data from external sources.
+    A class to manage the actual reading or downloading of data from external sources. 
     Initiate with a testsuite param dictionary.
     To use later: source_parser.read(...). All the messy details are hidden.
     """
@@ -240,21 +240,21 @@ class SourceParser(object):
 
 class H5Source(SourceParser):
     """
-    A class to manage the actual reading or downloading of data from HDF5 sources.
+    A class to manage the actual reading or downloading of data from HDF5 sources. 
     """
 
     def __init__( self, params ):
 
         super(H5Source,self).__init__(params)
 
-        if 'filename' not in list(self.params.keys()):
+        if 'filename' not in self.params.keys():
             raise NameError('Must provide a filename for hdf5 source.')
-        if 'table' not in list(self.params.keys()):
+        if 'table' not in self.params.keys():
             raise NameError('Must specify table name for hdf5 file.')
         if type(self.params['table']) is not list:
             raise TypeError('Table must be provided as a list of names (even a list of one).')
 
-        if 'group' in list(self.params.keys()):
+        if 'group' in self.params.keys():
 
             self.hdf = h5py.File(self.params['filename'], mode = 'r')
             # save all column names
@@ -286,7 +286,7 @@ class H5Source(SourceParser):
     def read_direct( self, group, table, col):
         # print('READING FROM HDF5 FILE: group = ',group,' table = ',table,' col = ',col)
         self.open() #attempting this
-        return self.hdf[group][table][col][:]
+        return self.hdf[group][table][col][:] 
         self.close()
     def read( self, col=None, rows=None, nosheared=False, full_path = None ):
 
@@ -300,11 +300,11 @@ class H5Source(SourceParser):
             if rows is not None:
                 if hasattr(rows,'__len__'):
                     if len(rows==2):
-                        out = self.hdf[self.params['group']][table][col][rows[0]:rows[1]]
+                        out = self.hdf[self.params['group']][table][col][rows[0]:rows[1]] 
                 else:
-                    out = self.hdf[self.params['group']][table][col][rows]
+                    out = self.hdf[self.params['group']][table][col][rows] 
             else:
-                out = self.hdf[self.params['group']][table][col][:]
+                out = self.hdf[self.params['group']][table][col][:] 
 
             return out
 
@@ -315,7 +315,7 @@ class H5Source(SourceParser):
             raise NameError('Must specify column.')
 
         out = []
-        # For metacal file, loop over tables and return list of 5 unsheared+sheared values for column (or just unsheraed if 'nosheared' is true or there doesn't exist sheared values for this column)
+        # For metacal file, loop over tables and return list of 5 unsheared+sheared values for column (or just unsheraed if 'nosheared' is true or there doesn't exist sheared values for this column) 
         # For classic file, get single column.
         # For both metacal and classic files, output is a list of columns (possible of length 1)
         for i,t in enumerate(self.params['table']):
@@ -351,16 +351,16 @@ class H5Source(SourceParser):
 
 class FITSSource(SourceParser):
     """
-    A class to manage the actual reading or downloading of data from HDF5 sources.
+    A class to manage the actual reading or downloading of data from HDF5 sources. 
     """
 
     def __init__( self, params ):
 
         super(FITSSource,self).__init__(params)
 
-        if 'filename' not in list(self.params.keys()):
+        if 'filename' not in self.params.keys():
             raise NameError('Must provide a filename for fits source.')
-        if 'table' not in list(self.params.keys()):
+        if 'table' not in self.params.keys():
             raise NameError('Must specify table name for fits file.')
         if type(self.params['table']) is not list:
             raise TypeError('Table must be provided as a list of names (even a list of one).')
@@ -382,7 +382,7 @@ class FITSSource(SourceParser):
     def read_direct( self, group, table, col):
         # print('READING FROM HDF5 FILE: group = ',group,' table = ',table,' col = ',col)
         self.open() #attempting this
-        return self.fits[table][col][:]
+        return self.fits[table][col][:] 
         self.close()
 
     def read( self, col=None, rows=None, nosheared=False ):
@@ -397,11 +397,11 @@ class FITSSource(SourceParser):
             if rows is not None:
                 if hasattr(rows,'__len__'):
                     if len(rows==2):
-                        out = self.fits[table][col][rows[0]:rows[1]]
+                        out = self.fits[table][col][rows[0]:rows[1]] 
                 else:
-                    out = self.fits[table][col][rows]
+                    out = self.fits[table][col][rows] 
             else:
-                out = self.fits[table][col][:]
+                out = self.fits[table][col][:] 
 
             return out
 
@@ -409,7 +409,7 @@ class FITSSource(SourceParser):
             raise NameError('Must specify column.')
 
         out = []
-        # For metacal file, loop over tables and return list of 5 unsheared+sheared values for column (or just unsheraed if 'nosheared' is true or there doesn't exist sheared values for this column)
+        # For metacal file, loop over tables and return list of 5 unsheared+sheared values for column (or just unsheraed if 'nosheared' is true or there doesn't exist sheared values for this column) 
         # For classic file, get single column.
         # For both metacal and classic files, output is a list of columns (possible of length 1)
         for i,t in enumerate(self.params['table']):
@@ -443,7 +443,7 @@ class FITSSource(SourceParser):
 
 class DESDMSource(SourceParser):
     """
-    A class to manage the actual reading or downloading of data from DESDM sources.
+    A class to manage the actual reading or downloading of data from DESDM sources. 
     """
 
     def __init__( self ):
@@ -452,7 +452,7 @@ class DESDMSource(SourceParser):
 
 class LSSTDMSource(SourceParser):
     """
-    A class to manage the actual reading or downloading of data from LSSTDM sources.
+    A class to manage the actual reading or downloading of data from LSSTDM sources. 
     """
 
     def __init__( self ):
@@ -742,7 +742,7 @@ class Calibrator(object):
                 return R,c,w_
 
         else:
-
+            
             return None,None,w_
 
     def select_resp(self,col,mask,w,ws):
@@ -764,9 +764,8 @@ class NoCalib(Calibrator):
         self.Rg1 = self.Rg2 = None
         self.c1 = self.c2 = None
         self.w = [1]
-        if ('w' in self.params):
-            if (self.params['w'] is not None):
-                self.w = self.selector.get_col(self.params['w'])
+        if 'w' in self.params:
+            self.w = self.selector.get_col(self.params['w'])
 
 
 class MetaCalib(Calibrator):
@@ -808,7 +807,7 @@ class MetaCalib(Calibrator):
             self.c2 = self.selector.get_col(self.params['c'][1],uncut=True)
         self.w = [1] * 5
         if 'w' in self.params:
-            self.w = self.selector.get_col(self.params['w'])
+            self.w = self.selector.get_col(self.params['w'],uncut=True)
 
     def select_resp(self,col,mask,w,ws):
         """
@@ -823,24 +822,26 @@ class MetaCalib(Calibrator):
             mask_ = [ get_array(imask) for imask in self.selector.mask ]
 
         if col == self.params['e'][0]:
-            eSp = np.sum(get_array(self.e1)[mask_[1]]*w[1])
-            eSm = np.sum(get_array(self.e1)[mask_[2]]*w[2])
             if mask is not None:
                 eSp = np.sum((get_array(self.e1)[mask_[1]])[mask[1]]*w[1])
                 eSm = np.sum(get_array(self.e1)[mask_[2]][mask[2]]*w[2])
+            else:
+                eSp = np.sum(get_array(self.e1)[mask_[1]]*w[1])
+                eSm = np.sum(get_array(self.e1)[mask_[2]]*w[2])
             Rs = eSp/ws[1] - eSm/ws[2]
         elif col == self.params['e'][1]:
-            eSp = np.sum(get_array(self.e2)[mask_[3]]*w[3])
-            eSm = np.sum(get_array(self.e2)[mask_[4]]*w[4])
             if mask is not None:
                 eSp = np.sum(get_array(self.e2)[mask_[3]][mask[3]]*w[3])
                 eSm = np.sum(get_array(self.e2)[mask_[4]][mask[4]]*w[4])
+            else:
+                eSp = np.sum(get_array(self.e2)[mask_[3]]*w[3])
+                eSm = np.sum(get_array(self.e2)[mask_[4]]*w[4])
             Rs = eSp/ws[3] - eSm/ws[4]
         else:
             return 0.
 
         Rs /= 2.*self.params['dg']
-        # print('Rs',Rs,Rs*2.*self.params['dg']
+        # print('Rs',Rs,Rs*2.*self.params['dg'] 
         # print('check what dg is used....'
 
         return Rs
@@ -903,7 +904,7 @@ class Splitter(object):
 
     def get_x( self, col, xbin=None, return_mask=False ):
         """
-        Get the 'x' column - the column you're binning the data by.
+        Get the 'x' column - the column you're binning the data by. 
         If you haven't already called splitter with this x col, the data will be read from the source and the binning edges will be set up.
         Optionally give a bin number, it will return the portion of the x array that falls in that bin. Can also optionally return the mask for that bin.
         """
@@ -929,7 +930,7 @@ class Splitter(object):
 
     def get_y( self, col, xbin=None, return_mask=False ):
         """
-        Get the 'y' column - the column you're doing stuff with in bins of the x col. If you haven't called splitter.get_x(), an error will be raised, since you haven't defined what you're binning against.
+        Get the 'y' column - the column you're doing stuff with in bins of the x col. If you haven't called splitter.get_x(), an error will be raised, since you haven't defined what you're binning against.  
         If you haven't already called splitter with this y col, the data will be read from the source.
         Optionally give a bin number, it will return the portion of the y array that falls in that bin. Can also optionally return the mask for that bin.
         """
@@ -1281,7 +1282,7 @@ class Hist2D(object):
         for x in self.split:
             for y in self.split:
                 if x==y:
-                    continue
+                    continue                
                 fpath = file_path(self.params,'test_output','hist_2d',var=x,var2=y,var3='edges')
                 edges = np.loadtxt(fpath)
                 fpath = file_path(self.params,'test_output','hist_2d',var=x,var2=y,var3='bins')
@@ -1377,3 +1378,4 @@ if __name__ == "__main__":
     pr.disable()
     ps = pstats.Stats(pr).sort_stats('time')
     ps.print_stats(20)
+
