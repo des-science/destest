@@ -321,7 +321,7 @@ class H5Source(SourceParser):
         for i,t in enumerate(self.params['table']):
             if i==0:
                 if col not in list(self.hdf[self.params['group']][t].keys()):
-                    print(list(self.params['group'],t,col,self.hdf[self.params['group']][t].keys()))
+                    print(self.params['group'],t,col,list(self.hdf[self.params['group']][t].keys()))
                     raise NameError('Col '+col+' not found in hdf5 file.')
             else:
                 if nosheared:
