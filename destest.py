@@ -264,7 +264,7 @@ class H5Source(SourceParser):
 
             # Loop over tables and save convenience information
             for t in self.params['table']:
-                keys = self.hdf[self.params['group']][t].keys()
+                keys = list(self.hdf[self.params['group']][t].keys())
                 if self.hdf[self.params['group']][t][keys[0]].shape[0] != self.size:
                     raise TypeError('Length of sheared tables in hdf5 file must match length of unsheared table.')
 
