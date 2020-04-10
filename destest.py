@@ -807,7 +807,7 @@ class MetaCalib(Calibrator):
             self.c2 = self.selector.get_col(self.params['c'][1],uncut=True)
         self.w = [1] * 5
         if 'w' in self.params:
-            self.w = self.selector.get_col(self.params['w'])
+            self.w = self.selector.get_col(self.params['w'],uncut=True)
 
     def select_resp(self,col,mask,w,ws):
         """
