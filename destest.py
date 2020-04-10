@@ -270,7 +270,7 @@ class H5Source(SourceParser):
 
             if len(self.params['table'])>1:
                 # save sheared column names
-                self.sheared_cols = self.hdf[self.params['group']][self.params['table'][1]].keys()
+                self.sheared_cols = list(self.hdf[self.params['group']][self.params['table'][1]].keys())
                 print(self.sheared_cols)
 
         else:
@@ -320,8 +320,8 @@ class H5Source(SourceParser):
         # For both metacal and classic files, output is a list of columns (possible of length 1)
         for i,t in enumerate(self.params['table']):
             if i==0:
-                if col not in self.hdf[self.params['group']][t].keys():
-                    print(self.params['group'],t,col,self.hdf[self.params['group']][t].keys())
+                if col not in list(self.hdf[self.params['group']][t].keys()):
+                    print(list(self.params['group'],t,col,self.hdf[self.params['group']][t].keys()))
                     raise NameError('Col '+col+' not found in hdf5 file.')
             else:
                 if nosheared:
@@ -330,7 +330,7 @@ class H5Source(SourceParser):
                 if col not in self.sheared_cols:
                     print(col,'not in sheared cols')
                     continue
-                if col not in self.hdf[self.params['group']][t].keys():
+                if col not in list(self.hdf[self.params['group']][t].keys()):
                     print(col,'not in table keys')
                     raise NameError('Col '+col+' not found in sheared table '+t+' of hdf5 file.')
 
