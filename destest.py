@@ -718,7 +718,7 @@ class Calibrator(object):
         print('-----',col, self.params['e'])
 
         if col in self.params['e']:
-            ws = [ scalar_sum(w_,len(Rg)) for i,w_ in enumerate(w)]
+            ws = [ scalar_sum(wx_,len(Rg)) for i,wx_ in enumerate(w)]
             # Get a selection response
             Rs = self.select_resp(col,mask,w,ws)
             print('Rs',col,np.mean(Rg),Rs)
