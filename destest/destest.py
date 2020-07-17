@@ -546,7 +546,7 @@ class Selector(object):
                     for i in range(len(mask)):
                         mask[i] = mask[i][mask_]
 
-                    print('end mask',mask_,mask[0])
+                    print('end mask', mask_, mask[0], np.sum(mask_), np.sum(mask[0]))
 
             else:
 
