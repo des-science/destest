@@ -730,10 +730,8 @@ class Calibrator(object):
             if return_wRgS:
                 Rg1 = self.selector.get_masked(get_array(self.Rg1),mask)
                 Rg2 = self.selector.get_masked(get_array(self.Rg2),mask)
-                if col == self.params['e'][0]:
-                    Rs1 = self.select_resp(self.params['e'][0],mask,w,ws)
-                else:
-                    Rs2 = self.select_resp(self.params['e'][1],mask,w,ws)
+                Rs1 = self.select_resp(self.params['e'][0],mask,w,ws)
+                Rs2 = self.select_resp(self.params['e'][1],mask,w,ws)
                 return ((Rg1+Rg2)/2.+(Rs1+Rs2)/2.)*w[0]
             elif return_full:
                 return R,c,w_
